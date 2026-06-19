@@ -1,70 +1,46 @@
 package com.tcp.tgk.client;
 
 import com.tcp.tgk.client.service.TcpClientService;
+import com.tcp.tgk.client.shell.TerminalRunner;
+import com.tcp.tgk.client.ui.SwingUiFrame;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
-
-import java.util.Scanner;
 
 @SpringBootApplication
 @EnableScheduling
 public class TcpClientApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(TcpClientApplication.class, args);
+        // Read mode from env var or system property (default to both)
+        String mode = System.getenv("TCP_CLIENT_MODE");
+        if (mode == null) {
+            mode = System.getProperty("tcp.client.mode", "both");
+        }
+        
+        boolean headless = "terminal".equalsIgnoreCase(mode);
+        
+        new SpringApplicationBuilder(TcpClientApplication.class)
+            .headless(headless)
+            .run(args);
     }
 
     @Bean
-    public CommandLineRunner commandLineRunner(TcpClientService clientService) {
+    public CommandLineRunner commandLineRunner(
+            TcpClientService clientService,
+            TerminalRunner terminalRunner,
+            SwingUiFrame swingUiFrame) {
         return args -> {
-            // Connect to server immediately on startup
-            System.out.println("Connecting to server...");
+            System.out.println("Establishing initial connection...");
             clientService.connectToServer();
             
-            // Interactive CLI - this blocks and keeps app alive
-            Scanner scanner = new Scanner(System.in);
-            System.out.println("TCP Client Started. Type commands or 'exit' to quit.");
-            System.out.println("Special commands:");
-            System.out.println("  status       - Show connection status");
-            System.out.println("Examples:");
-            System.out.println("  probe:shallow");
-            System.out.println("  probe:deep");
-            System.out.println("  mgt:info");
-            System.out.println("  mgt:time");
-            System.out.println("  mgt:capabilities");
-            System.out.println("  m: 5 + 10");
-            System.out.println();
-
-            while (scanner.hasNextLine()) {
-                System.out.print("> ");
-                System.out.flush();
-                String command = scanner.nextLine().trim();
-                
-                if ("exit".equalsIgnoreCase(command)) {
-                    System.out.println("Exiting...");
-                    break;
-                }
-                
-                if ("status".equalsIgnoreCase(command)) {
-                    System.out.println("Connection Status: " + clientService.getConnectionStatus());
-                    continue;
-                }
-                
-                if (command.isEmpty()) {
-                    continue;
-                }
-
-                try {
-                    String response = clientService.sendCommand(command);
-                    System.out.println(response);
-                } catch (Exception e) {
-                    System.err.println("Error: " + e.getMessage());
-                }
-                System.out.println();
-            }
+            // Launch Swing UI frame if enabled
+            swingUiFrame.showUi();
+            
+            // Launch Terminal CLI console shell if enabled
+            terminalRunner.startShell();
         };
     }
 }

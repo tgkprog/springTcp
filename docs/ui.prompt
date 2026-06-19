@@ -1,0 +1,74 @@
+make a swing ui client as an optional UI
+
+client will have a mode = terminal or both or ui
+so we can start with terminal only mode or both terminal and ui or with terminal read disabled (only ui)
+
+in UI have one server ip and port text box default 127.0.01:5039
+
+a round indicator to show connecting (YELLOW false) or connected (true, green)
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import javax.swing.JPanel;
+
+public class BooleanIndicator extends JPanel {
+    private boolean status;
+    private Color trueColor;
+    private Color falseColor;
+
+    public BooleanIndicator(boolean initialStatus) {
+        this.status = initialStatus;
+        this.trueColor = Color.GREEN;
+        this.falseColor = Color.YELLOW;
+        setOpaque(false); // Ensures background transparency
+    }
+
+    public void setStatus(boolean status) {
+        this.status = status;
+        repaint(); // Triggers a redraw when the state changes
+    }
+
+    public boolean isStatus() {
+        return status;
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g.create();
+
+        // Enable antialiasing for smooth, round edges
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // Determine the diameter based on the component's size
+        int size = Math.min(getWidth(), getHeight()) - 4;
+        int x = (getWidth() - size) / 2;
+        int y = (getHeight() - size) / 2;
+
+        // Set the color based on the boolean state
+        g2.setColor(status ? trueColor : falseColor);
+        g2.fillOval(x, y, size, size);
+
+        // (Optional) Draw a dark border around the indicator
+        g2.setColor(Color.DARK_GRAY);
+        g2.drawOval(x, y, size, size);
+
+        g2.dispose();
+    }
+
+    // Force the component to be a square for a perfect circle
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(20, 20);
+    }
+}
+
+a drop down for which command to send
+if maths then a text box for value 1, another drop down for operator and a another text box for 2nd value
+and a  button with text ">" to send the selected command.
+
+a result (scrollable keeps last 20 input and outpit) and error label (multiline and scrollable keeps last 50 lines)
+

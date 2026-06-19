@@ -82,7 +82,7 @@ public class TcpClientConfig {
     }
 
     @Bean
-    public AbstractClientConnectionFactory clientConnectionFactory() {
+    public AbstractClientConnectionFactory clientConnectionFactory(org.springframework.context.ApplicationEventPublisher eventPublisher) {
         TcpNetClientConnectionFactory connectionFactory = new TcpNetClientConnectionFactory(host, port);
         connectionFactory.setSerializer(new ByteArrayCrLfSerializer());
         connectionFactory.setDeserializer(new ByteArrayCrLfSerializer());
@@ -91,6 +91,11 @@ public class TcpClientConfig {
         connectionFactory.setSoKeepAlive(soKeepAlive);
         connectionFactory.setSoTcpNoDelay(tcpNoDelay);
         connectionFactory.setConnectTimeout(connectionTimeout);
+        
+        // Enable TCP event publishing
+        connectionFactory.setApplicationEventPublisher(eventPublisher);
+        
+        log.info("TCP Connection Factory configured with event publishing");
         return connectionFactory;
     }
 
@@ -100,9 +105,9 @@ public class TcpClientConfig {
     }
 
     @Bean
-    public TcpSendingMessageHandler tcpSendingMessageHandler() {
+    public TcpSendingMessageHandler tcpSendingMessageHandler(AbstractClientConnectionFactory connectionFactory) {
         TcpSendingMessageHandler handler = new TcpSendingMessageHandler();
-        handler.setConnectionFactory(clientConnectionFactory());
+        handler.setConnectionFactory(connectionFactory);
         return handler;
     }
 }

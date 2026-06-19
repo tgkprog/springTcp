@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCP Client Swing UI Mockup & Spec</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-color: #e2e8f0;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.08);
+            --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font);
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            background: linear-gradient(to right, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Mockup Window container simulating Swing */
+        .swing-window {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+        }
+
+        .window-titlebar {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .window-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+        .window-dot.close { background: #fc5c57; }
+        .window-dot.minimize { background: #f3bb2c; }
+        .window-dot.maximize { background: #34c749; }
+
+        .window-content {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Connection Config Bar */
+        .config-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.flex-grow {
+            flex-grow: 1;
+        }
+
+        label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input, select {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            color: var(--text-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Connection Indicator */
+        .status-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-right: 16px;
+            border-right: 1px solid var(--border);
+            height: 38px;
+            margin-top: 18px;
+        }
+
+        .status-indicator {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: var(--warning);
+            border: 1px solid rgba(0,0,0,0.3);
+            box-shadow: 0 0 8px var(--warning);
+            transition: all 0.3s;
+        }
+
+        .status-indicator.connected {
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .status-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .refresh-btn {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            color: var(--text-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 38px;
+            width: 38px;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Control Panel */
+        .command-panel {
+            background: rgba(15, 23, 42, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .inputs-container {
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        /* Maths subpanel */
+        .math-inputs {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .math-inputs.hidden {
+            display: none;
+        }
+
+        .math-val {
+            width: 80px;
+        }
+
+        .math-op {
+            width: 60px;
+        }
+
+        .send-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Log Outputs Layout */
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .output-box {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .log-area {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            height: 200px;
+            overflow-y: scroll;
+            padding: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+        }
+
+        .result-log {
+            color: #38bdf8;
+        }
+
+        .error-log {
+            color: #fda4af;
+        }
+
+        /* Spec / Info styling */
+        .spec-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .spec-card h2 {
+            margin-top: 0;
+            font-size: 1.3rem;
+            color: #60a5fa;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .spec-card ul {
+            padding-left: 20px;
+        }
+
+        .spec-card li {
+            margin-bottom: 8px;
+        }
+
+        .code-snippet {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>TCP Client UI Design Prototype</h1>
+
+    <!-- Simulated Swing Window -->
+    <div class="swing-window">
+        <div class="window-titlebar">
+            <span class="window-title">TCP Client Swing Panel</span>
+            <div class="window-controls">
+                <div class="window-dot minimize"></div>
+                <div class="window-dot maximize"></div>
+                <div class="window-dot close"></div>
+            </div>
+        </div>
+
+        <div class="window-content">
+            <!-- Server Connection Settings -->
+            <div class="config-row">
+                <div class="status-container">
+                    <div class="status-indicator" id="status-indicator"></div>
+                    <span class="status-label" id="status-label">CONNECTING</span>
+                </div>
+
+                <div class="form-group flex-grow">
+                    <label for="server-address">Server Address</label>
+                    <div style="display: flex; gap: 8px; width: 100%;">
+                        <input type="text" id="server-address" value="127.0.0.1:5039" style="flex-grow: 1;" onkeydown="handleAddressKey(event)">
+                        <button class="refresh-btn" id="reconnect-btn" onclick="reconnect()" title="Reconnect">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 4v6h-6"></path>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Command Inputs Panel -->
+            <div class="command-panel">
+                <div class="inputs-container">
+                    <div class="form-group">
+                        <label for="cmd-select">Command Type</label>
+                        <select id="cmd-select" onchange="toggleInputs()">
+                            <option value="probe:shallow">probe:shallow</option>
+                            <option value="probe:deep">probe:deep</option>
+                            <option value="mgt:info">mgt:info</option>
+                            <option value="mgt:time">mgt:time</option>
+                            <option value="maths">Maths (m:)</option>
+                        </select>
+                    </div>
+
+                    <!-- Dynamic fields for Maths command -->
+                    <div class="math-inputs hidden" id="math-fields">
+                        <div class="form-group">
+                            <label>Value 1</label>
+                            <input type="number" class="math-val" id="val1" placeholder="5">
+                        </div>
+                        <div class="form-group">
+                            <label>Op</label>
+                            <select class="math-op" id="math-op">
+                                <option value="+">+</option>
+                                <option value="-">-</option>
+                                <option value="*">*</option>
+                                <option value="/">/</option>
+                                <option value="%">%</option>
+                                <option value="^">^</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Value 2</label>
+                            <input type="number" class="math-val" id="val2" placeholder="10">
+                        </div>
+                    </div>
+
+                    <!-- Generic fields for other commands -->
+                    <div class="form-group flex-grow" id="generic-payload-container">
+                        <label>Payload (Optional)</label>
+                        <input type="text" id="generic-payload" placeholder="Command arguments...">
+                    </div>
+
+                    <button class="send-btn" onclick="sendCommand()"> &gt; </button>
+                </div>
+            </div>
+
+            <!-- Output Lists -->
+            <div class="output-grid">
+                <div class="output-box">
+                    <label>Results &amp; History (Last 20)</label>
+                    <div class="log-area result-log" id="result-log"></div>
+                </div>
+                <div class="output-box">
+                    <label>Error Console (Last 50 lines)</label>
+                    <div class="log-area error-log" id="error-log"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI prompt Validation & Architecture Analysis -->
+    <div class="spec-card">
+        <h2>1. UI Prompt Validation</h2>
+        <p>The prompt is <strong>mostly complete</strong> but has a few minor gaps that must be resolved for a production-ready Swing implementation:</p>
+        <ul>
+            <li><strong>Port Re-configuration:</strong> The UI allows modifying the server IP and Port. We need to decide if changing this automatically triggers a reconnection to the new endpoint, or if we need an explicit "Re-connect" button.</li>
+            <li><strong>Terminal Input Separation:</strong> When the client runs in <code>ui</code> mode, we must make sure Spring Boot doesn't block waiting for console stdin, otherwise the application won't launch/close cleanly when run without a terminal attached.</li>
+            <li><strong>Mathematical Operators:</strong> The operators supported by the server math engine (<code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>) should be fully defined.</li>
+        </ul>
+    </div>
+
+    <div class="spec-card">
+        <h2>2. Decoupling &amp; Refactoring Analysis</h2>
+        <p><strong>Yes, refactoring is required.</strong> Currently, the interactive terminal console loop is coupled directly inside the main `CommandLineRunner` of `TcpClientApplication` using a blocking <code>Scanner</code>. To support running the UI independently or in combination with the terminal:</p>
+        
+        <h3>Proposed Architecture:</h3>
+        <ul>
+            <li><strong>Core Layer:</strong> Keep <code>TcpClientService</code> and <code>ConnectionStateMachine</code> entirely decoupled. They are already clean Spring beans that only interact via events and direct method calls, meaning they can serve both CLI and GUI shells.</li>
+            <li><strong>CLI Layer:</strong> Move the blocking interactive terminal loop to a separate <code>CliConsoleShell</code> component. This component should run in a separate background thread only when the mode is <code>terminal</code> or <code>both</code>.</li>
+            <li><strong>GUI Layer:</strong> Create a Swing-based <code>SwingUiShell</code> component. This component should build the JFrame and components on the Event Dispatch Thread (EDT) and register listeners to the <code>ConnectionStateMachine</code> to dynamically update the connection indicator.</li>
+            <li><strong>Configuration:</strong> Introduce a new configuration property <code>tcp.client.mode</code> supporting:
+                <ul>
+                    <li><code>terminal</code>: Console interactive CLI only (default behavior).</li>
+                    <li><code>ui</code>: Swing interface only (no blocking console scanner).</li>
+                    <li><code>both</code>: Starts both Swing UI and Console shell concurrently.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>Example configuration properties (application.yml):</h3>
+        <div class="code-snippet">
+tcp:
+  client:
+    mode: ui # terminal, ui, or both
+    monitoring:
+      enabled: true
+      tick-ms: 2000
+        </div>
+    </div>
+
+    <!-- Swing UI Implementation Tasks -->
+    <div class="spec-card">
+        <h2>3. Swing UI Implementation Tasks (TODO Status)</h2>
+        <ul>
+            <li><strong>[✓] Decouple CLI Shell:</strong> Extracted the blocking console reader from <code>TcpClientApplication</code> into <code>TerminalRunner</code>.</li>
+            <li><strong>[✓] Non-Blocking UI:</strong> Commands run asynchronously in a separate thread, keeping the Swing EDT fully responsive.</li>
+            <li><strong>[✓] Connection Indicator:</strong> Programmed a custom anti-aliased <code>BooleanIndicator</code> component to render the connection state LED.</li>
+            <li><strong>[✓] Hot-reconfiguration:</strong> Handled server address text changes, supporting Enter-key triggers and Refresh-button clicks via <code>clientService.reconfigureTarget()</code>.</li>
+            <li><strong>[✓] Event-Driven State Updates:</strong> Added <code>ConnectionStateChangeEvent</code> to push state updates instantly from <code>ConnectionStateMachine</code> to the UI.</li>
+            <li><strong>[✓] Log Mirroring:</strong> Programmatically registered a custom Logback appender to stream live logger outputs to the UI's error console area.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // Simple mock logic for the prototype
+    let connected = false;
+    const statusIndicator = document.getElementById('status-indicator');
+    const statusLabel = document.getElementById('status-label');
+    const resultLog = document.getElementById('result-log');
+    const errorLog = document.getElementById('error-log');
+
+    let connectTimeout = null;
+
+    function reconnect() {
+        if (connectTimeout) {
+            clearTimeout(connectTimeout);
+        }
+        
+        connected = false;
+        statusIndicator.classList.remove('connected');
+        statusLabel.textContent = 'CONNECTING';
+        
+        const address = document.getElementById('server-address').value;
+        logResult('System', `Connecting to server ${address}...`);
+        
+        connectTimeout = setTimeout(() => {
+            connected = true;
+            statusIndicator.classList.add('connected');
+            statusLabel.textContent = 'CONNECTED';
+            logResult('System', `Successfully connected to server ${address}`);
+        }, 1500);
+    }
+
+    function handleAddressKey(event) {
+        if (event.key === 'Enter') {
+            reconnect();
+        }
+    }
+
+    // Initial connection simulation
+    reconnect();
+
+    function toggleInputs() {
+        const cmdSelect = document.getElementById('cmd-select');
+        const mathFields = document.getElementById('math-fields');
+        const genericContainer = document.getElementById('generic-payload-container');
+
+        if (cmdSelect.value === 'maths') {
+            mathFields.classList.remove('hidden');
+            genericContainer.classList.add('hidden');
+        } else {
+            mathFields.classList.add('hidden');
+            genericContainer.classList.remove('hidden');
+        }
+    }
+
+    function logResult(source, msg) {
+        const time = new Date().toLocaleTimeString();
+        resultLog.textContent = `[${time}] ${source} > ${msg}\n` + resultLog.textContent;
+    }
+
+    function logError(msg) {
+        const time = new Date().toLocaleTimeString();
+        errorLog.textContent = `[${time}] ERROR: ${msg}\n` + errorLog.textContent;
+    }
+
+    function sendCommand() {
+        if (!connected) {
+            logError('Cannot send command - Client is not connected');
+            return;
+        }
+
+        const cmdSelect = document.getElementById('cmd-select');
+        let cmdText = '';
+
+        if (cmdSelect.value === 'maths') {
+            const v1 = document.getElementById('val1').value || '5';
+            const op = document.getElementById('math-op').value;
+            const v2 = document.getElementById('val2').value || '10';
+            cmdText = `m: ${v1} ${op} ${v2}`;
+            logResult('User', cmdText);
+            
+            // Mock answer
+            setTimeout(() => {
+                let ans = 0;
+                const n1 = parseFloat(v1);
+                const n2 = parseFloat(v2);
+                if (op === '+') ans = n1 + n2;
+                else if (op === '-') ans = n1 - n2;
+                else if (op === '*') ans = n1 * n2;
+                else if (op === '/') ans = n1 / n2;
+                else if (op === '%') ans = n1 % n2;
+                else if (op === '^') ans = Math.pow(n1, n2);
+                logResult('Server', `RESULT: ${ans}`);
+            }, 300);
+        } else {
+            cmdText = cmdSelect.value;
+            const payload = document.getElementById('generic-payload').value;
+            if (payload) {
+                cmdText += `:${payload}`;
+            }
+            logResult('User', cmdText);
+            
+            // Mock response
+            setTimeout(() => {
+                if (cmdSelect.value.startsWith('probe')) {
+                    logResult('Server', 'OK: Server is running');
+                } else if (cmdSelect.value === 'mgt:time') {
+                    logResult('Server', `TIME: ${new Date().toISOString()}`);
+                } else {
+                    logResult('Server', 'COMMAND ACKNOWLEDGED');
+                }
+            }, 300);
+        }
+    }
+</script>
+</body>
+</html>

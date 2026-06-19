@@ -4,20 +4,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.integration.ip.tcp.TcpSendingMessageHandler;
 import org.springframework.integration.ip.tcp.connection.AbstractClientConnectionFactory;
+import org.springframework.integration.ip.tcp.connection.TcpConnection;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 public class TcpClientService {
@@ -26,6 +24,9 @@ public class TcpClientService {
 
     @Autowired
     private AbstractClientConnectionFactory connectionFactory;
+    
+    @Autowired
+    private ConnectionStateMachine stateMachine;
 
     @Value("${tcp.client.connection.retry.enabled:true}")
     private boolean retryEnabled;
@@ -51,18 +52,32 @@ public class TcpClientService {
     @Value("${tcp.client.monitoring.tick-ms:2000}")
     private long monitoringTickMs;
 
-    private Socket persistentSocket;
-    private PrintWriter persistentOut;
-    private BufferedReader persistentIn;
-    private volatile boolean isConnected = false;
-    private final AtomicReference<ConnectionStatus> connectionStatus = new AtomicReference<>(ConnectionStatus.UNKNOWN);
+    private TcpConnection activeConnection;
+    private final SynchronousQueue<String> responseQueue = new SynchronousQueue<>();
+    private final AtomicBoolean isConnecting = new AtomicBoolean(false);
+    private volatile boolean isShutdown = false;
 
     @PostConstruct
     public void init() {
+        connectionFactory.registerListener(message -> {
+            try {
+                Object payload = message.getPayload();
+                String response;
+                if (payload instanceof byte[]) {
+                    response = new String((byte[]) payload, StandardCharsets.UTF_8).trim();
+                } else {
+                    response = payload.toString().trim();
+                }
+                log.info("TcpListener received response: [{}]", response);
+                responseQueue.offer(response);
+            } catch (Exception e) {
+                log.error("Error in TcpListener: {}", e.getMessage());
+            }
+            return false;
+        });
         log.info("TCP Client Service initialized");
         log.info("Connection Monitoring: {} (tick: {}ms)", monitoringEnabled ? "ENABLED" : "DISABLED", monitoringTickMs);
-        log.info("Monitoring enabled flag value: {}", monitoringEnabled);
-        log.info("@EnableScheduling should be active for monitoring to work");
+        log.info("Using ConnectionStateMachine for state tracking");
     }
 
     @Scheduled(fixedDelay = 5000, initialDelay = 5000)
@@ -70,16 +85,20 @@ public class TcpClientService {
         log.info("TEST: Scheduled task is working! Time: {} Thread: {}", System.currentTimeMillis(), Thread.currentThread().getName());
     }
 
-    public ConnectionStatus getConnectionStatus() {
-        return connectionStatus.get();
+    public ConnectionStateMachine.ConnectionState getConnectionStatus() {
+        return stateMachine.getCurrentState();
     }
 
     @Scheduled(fixedDelayString = "${tcp.client.monitoring.tick-ms:2000}", 
                initialDelayString = "${tcp.client.monitoring.tick-ms:2000}")
     public void monitorConnection() {
-        log.info("MONITOR METHOD CALLED - enabled={}", monitoringEnabled);
         if (!monitoringEnabled) {
-            log.info("MONITOR: Skipping because disabled");
+            return;
+        }
+
+        // Only monitor if we are currently CONNECTED. Skip during transient or error states.
+        if (stateMachine.getCurrentState() != ConnectionStateMachine.ConnectionState.CONNECTED) {
+            log.debug("MONITOR: Skipping health check because state is not CONNECTED (current: {})", stateMachine.getCurrentState());
             return;
         }
 
@@ -88,119 +107,123 @@ public class TcpClientService {
             try {
                 log.info("Running connection health check (shallow probe)");
                 String response = sendShallowProbe();
+                log.info("Probe response: [{}]", response == null ? "NULL" : response);
                 
                 if (response != null && response.contains("OK")) {
-                    if (connectionStatus.get() != ConnectionStatus.CONNECTED) {
-                        log.info("Connection status changed: {} -> CONNECTED", connectionStatus.get());
-                        connectionStatus.set(ConnectionStatus.CONNECTED);
-                    }
+                    log.info("Probe SUCCESS - response contains OK");
                 } else {
+                    log.warn("Probe FAILED - response does not contain OK");
                     handleConnectionError("Invalid probe response: " + response);
                 }
             } catch (Exception e) {
+                log.error("Probe EXCEPTION: {}", e.getMessage(), e);
                 handleConnectionError(e.getMessage());
             }
         }
     }
 
     private void handleConnectionError(String errorMessage) {
-        ConnectionStatus previousStatus = connectionStatus.get();
+        ConnectionStateMachine.ConnectionState previousStatus = stateMachine.getCurrentState();
         log.warn("Connection health check failed: {}", errorMessage);
         
         // Set to ERROR (transient)
-        connectionStatus.set(ConnectionStatus.ERROR);
+        stateMachine.transitionTo(ConnectionStateMachine.ConnectionState.ERROR);
         log.info("Connection status changed: {} -> ERROR", previousStatus);
         
-        // Immediately trigger reconnection
-        log.info("Triggering immediate reconnection...");
-        connectionStatus.set(ConnectionStatus.CONNECTING);
-        log.info("Connection status changed: ERROR -> CONNECTING");
-        
         closePersistentConnection();
-        isConnected = false;
+        triggerReconnection("health check failed");
+    }
+
+    public void triggerReconnection(String reason) {
+        if (isShutdown) {
+            log.info("Shutdown in progress, ignoring reconnection request.");
+            return;
+        }
         
-        // Reconnect in background
-        new Thread(() -> {
-            try {
-                connectToServer();
-            } catch (Exception e) {
-                log.error("Background reconnection failed: {}", e.getMessage());
-            }
-        }, "reconnection-thread").start();
+        // Trigger background reconnection only if not already connecting
+        if (!isConnecting.get()) {
+            log.info("Triggering immediate reconnection...");
+            new Thread(() -> {
+                try {
+                    connectToServer();
+                } catch (Exception e) {
+                    log.error("Background reconnection failed: {}", e.getMessage());
+                }
+            }, "reconnection-thread").start();
+        } else {
+            log.info("Reconnection already in progress, skipping background thread spawning.");
+        }
     }
 
     private String sendShallowProbe() throws Exception {
-        if (!isConnected || persistentSocket == null || persistentSocket.isClosed() || !persistentSocket.isConnected()) {
+        if (!stateMachine.isConnected() || activeConnection == null || !activeConnection.isOpen()) {
             throw new Exception("Not connected");
         }
 
         // Already synchronized by caller
-        // Send with CRLF as server expects
-        persistentOut.print("probe:shallow\r\n");
-        persistentOut.flush();
-        if (persistentOut.checkError()) {
-            throw new Exception("Failed to send probe");
-        }
+        activeConnection.send(MessageBuilder.withPayload("probe:shallow".getBytes(StandardCharsets.UTF_8)).build());
 
-        StringBuilder response = new StringBuilder();
-        String line;
-        long startTime = System.currentTimeMillis();
-        
-        while ((line = persistentIn.readLine()) != null) {
-            // Timeout check
-            if (System.currentTimeMillis() - startTime > 1000) {
-                throw new Exception("Probe timeout");
-            }
-            
-            if (response.length() > 0) {
-                response.append("\n");
-            }
-            response.append(line);
-            
-            if (persistentIn.ready()) {
-                continue;
-            } else {
-                break;
-            }
+        String response = responseQueue.poll(1000, TimeUnit.MILLISECONDS);
+        if (response == null) {
+            throw new Exception("Probe timeout");
         }
         
-        return response.toString();
+        return response;
     }
 
     public void connectToServer() {
-        connectionStatus.set(ConnectionStatus.CONNECTING);
-        log.info("Connection status: CONNECTING");
+        if (stateMachine.isConnected()) {
+            return;
+        }
+        if (!isConnecting.compareAndSet(false, true)) {
+            log.info("Connection attempt already in progress, skipping concurrent connectToServer() request.");
+            return;
+        }
         
-        int attempt = 0;
-        while (!isConnected && (attempt < maxRetryAttempts || maxRetryAttempts == 9999)) {
-            attempt++;
-            try {
-                log.info("Attempting to connect to {}:{} (attempt {})", 
-                    connectionFactory.getHost(), connectionFactory.getPort(), attempt);
-                connectPersistent();
-                isConnected = true;
-                connectionStatus.set(ConnectionStatus.CONNECTED);
-                log.info("Successfully connected to server");
-                log.info("Connection status: CONNECTED");
-                return;
-            } catch (Exception e) {
-                log.warn("Connection attempt {} failed: {}", attempt, e.getMessage());
-                if (retryEnabled) {
-                    try {
-                        Thread.sleep(waitBetweenRetries);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
+        try {
+            stateMachine.transitionTo(ConnectionStateMachine.ConnectionState.CONNECTING);
+            log.info("Connection status: CONNECTING");
+            
+            int attempt = 0;
+            long currentWait = waitBetweenRetries;
+            while (!stateMachine.isConnected() && (attempt < maxRetryAttempts || maxRetryAttempts == 9999)) {
+                attempt++;
+                try {
+                    log.info("Attempting to connect to {}:{} (attempt {})", 
+                        connectionFactory.getHost(), connectionFactory.getPort(), attempt);
+                    connectPersistent();
+                    
+                    // Fallback manual transition if event listener didn't run synchronously (should run synchronously)
+                    if (!stateMachine.isConnected()) {
+                        stateMachine.transitionTo(ConnectionStateMachine.ConnectionState.CONNECTED);
+                    }
+                    
+                    log.info("Successfully connected to server");
+                    log.info("Connection status: CONNECTED");
+                    return;
+                } catch (Exception e) {
+                    log.warn("Connection attempt {} failed: {}", attempt, e.getMessage());
+                    if (retryEnabled) {
+                        try {
+                            log.info("Waiting {}ms before next connection attempt...", currentWait);
+                            Thread.sleep(currentWait);
+                            currentWait = Math.min(currentWait * 2, 5000);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    } else {
                         break;
                     }
-                } else {
-                    break;
                 }
             }
-        }
-        if (!isConnected) {
-            connectionStatus.set(ConnectionStatus.ERROR);
-            log.error("Failed to connect to server after {} attempts", attempt);
-            log.info("Connection status: ERROR");
+            if (!stateMachine.isConnected()) {
+                stateMachine.transitionTo(ConnectionStateMachine.ConnectionState.ERROR);
+                log.error("Failed to connect to server after {} attempts", attempt);
+                log.info("Connection status: ERROR");
+            }
+        } finally {
+            isConnecting.set(false);
         }
     }
 
@@ -220,7 +243,6 @@ public class TcpClientService {
                 lastException = e;
                 log.warn("Command failed (attempt {}): {}", i + 1, e.getMessage());
                 closePersistentConnection();
-                isConnected = false;
                 
                 if (i < attempts - 1 && retryEnabled) {
                     log.info("Reconnecting in {}ms...", waitBetweenRetries);
@@ -234,100 +256,75 @@ public class TcpClientService {
     }
 
     private void ensureConnected() throws Exception {
-        if (!isConnected || persistentSocket == null || persistentSocket.isClosed() || !persistentSocket.isConnected()) {
+        if (!stateMachine.isConnected() || activeConnection == null || !activeConnection.isOpen()) {
             log.info("Connection lost, reconnecting...");
             connectToServer();
+            
+            // Wait for connection to be established (up to 10 seconds)
+            int waitTime = 0;
+            while (isConnecting.get() && !stateMachine.isConnected() && waitTime < 10000) {
+                Thread.sleep(100);
+                waitTime += 100;
+            }
+            
+            if (!stateMachine.isConnected() || activeConnection == null || !activeConnection.isOpen()) {
+                throw new Exception("Not connected");
+            }
         }
     }
 
     private String sendViaPersistentConnection(String command) throws Exception {
         synchronized (this) {
-            // Send with CRLF as server expects
-            persistentOut.print(command + "\r\n");
-            persistentOut.flush();
-            if (persistentOut.checkError()) {
-                throw new Exception("Failed to send command - connection error");
+            responseQueue.clear();
+            activeConnection.send(MessageBuilder.withPayload(command.getBytes(StandardCharsets.UTF_8)).build());
+            
+            String response = responseQueue.poll(readTimeout, TimeUnit.MILLISECONDS);
+            if (response == null) {
+                throw new Exception("Response timeout");
             }
             
-            StringBuilder response = new StringBuilder();
-            String line;
-            
-            while ((line = persistentIn.readLine()) != null) {
-                if (response.length() > 0) {
-                    response.append("\n");
-                }
-                response.append(line);
-                
-                if (persistentIn.ready()) {
-                    continue;
-                } else {
-                    break;
-                }
-            }
-            
-            return response.toString();
+            return response;
         }
     }
 
     private void connectPersistent() throws Exception {
-        String host = connectionFactory.getHost();
-        int port = connectionFactory.getPort();
-        
-        persistentSocket = new Socket();
-        persistentSocket.connect(new java.net.InetSocketAddress(host, port), connectionTimeout);
-        persistentSocket.setSoTimeout(readTimeout);
-        persistentSocket.setKeepAlive(true);
-        persistentOut = new PrintWriter(persistentSocket.getOutputStream(), true);
-        persistentIn = new BufferedReader(new InputStreamReader(persistentSocket.getInputStream()));
+        if (!connectionFactory.isRunning()) {
+            log.info("Starting connectionFactory manually...");
+            connectionFactory.start();
+        }
+        activeConnection = connectionFactory.getConnection();
     }
 
     private void closePersistentConnection() {
         try {
-            if (persistentIn != null) persistentIn.close();
-            if (persistentOut != null) persistentOut.close();
-            if (persistentSocket != null) persistentSocket.close();
+            if (activeConnection != null) {
+                activeConnection.close();
+            }
         } catch (Exception e) {
-            // Ignore
+            log.warn("Error closing connection: {}", e.getMessage());
         } finally {
-            persistentSocket = null;
-            persistentOut = null;
-            persistentIn = null;
-            isConnected = false;
+            activeConnection = null;
         }
     }
 
     private String sendViaNewConnection(String command) throws Exception {
-        String host = connectionFactory.getHost();
-        int port = connectionFactory.getPort();
-        
-        try (Socket socket = new Socket()) {
-            socket.connect(new java.net.InetSocketAddress(host, port), connectionTimeout);
-            socket.setSoTimeout(readTimeout);
-            
-            try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-                
-                // Send with CRLF as server expects
-                out.print(command + "\r\n");
-                out.flush();
-                
-                StringBuilder response = new StringBuilder();
-                String line;
-                
-                while ((line = in.readLine()) != null) {
-                    if (response.length() > 0) {
-                        response.append("\n");
-                    }
-                    response.append(line);
-                    
-                    if (in.ready()) {
-                        continue;
-                    } else {
-                        break;
-                    }
-                }
-                
-                return response.toString();
+        if (!connectionFactory.isRunning()) {
+            log.info("Starting connectionFactory manually...");
+            connectionFactory.start();
+        }
+        TcpConnection connection = connectionFactory.getConnection();
+        try {
+            connection.send(MessageBuilder.withPayload(command.getBytes(StandardCharsets.UTF_8)).build());
+            String response = responseQueue.poll(readTimeout, TimeUnit.MILLISECONDS);
+            if (response == null) {
+                throw new Exception("Response timeout");
+            }
+            return response;
+        } finally {
+            try {
+                connection.close();
+            } catch (Exception e) {
+                // Ignore
             }
         }
     }
@@ -335,6 +332,28 @@ public class TcpClientService {
     @PreDestroy
     public void cleanup() {
         log.info("Shutting down client connection");
+        isShutdown = true;
         closePersistentConnection();
+    }
+
+    public String getHost() {
+        return connectionFactory.getHost();
+    }
+
+    public int getPort() {
+        return connectionFactory.getPort();
+    }
+
+    public void reconfigureTarget(String host, int port) {
+        log.info("Reconfiguring TCP client target to {}:{}", host, port);
+        try {
+            closePersistentConnection();
+            connectionFactory.stop();
+        } catch (Exception e) {
+            log.warn("Error stopping connection factory: {}", e.getMessage());
+        }
+        connectionFactory.setHost(host);
+        connectionFactory.setPort(port);
+        triggerReconnection("Endpoint reconfigured");
     }
 }

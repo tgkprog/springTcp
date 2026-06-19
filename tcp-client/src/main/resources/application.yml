@@ -4,20 +4,22 @@ spring:
 
 tcp:
   client:
-    host: localhost
-    port: 5039
+    # ui, terminal or both
+    mode: ${TCP_CLIENT_MODE:both}
+    host: ${TCP_CLIENT_HOST:localhost}
+    port: ${TCP_CLIENT_PORT:5039}
     connection:
-      persistent: true
-      timeout: 550
-      read-timeout: 5000
+      persistent: ${TCP_CLIENT_PERSISTENT:true}
+      timeout: ${TCP_CLIENT_TIMEOUT:550}
+      read-timeout: ${TCP_CLIENT_READ_TIMEOUT:5000}
       retry:
-        enabled: true
-        max-attempts: 9999
-        wait-between-retries: 150
+        enabled: ${TCP_CLIENT_RETRY_ENABLED:true}
+        max-attempts: ${TCP_CLIENT_RETRY_MAX_ATTEMPTS:99999}
+        wait-between-retries: ${TCP_CLIENT_RETRY_WAIT:150}
     socket:
-      so-timeout: 5000
-      so-keep-alive: true
-      tcp-no-delay: true
+      so-timeout: ${TCP_CLIENT_SO_TIMEOUT:5000}
+      so-keep-alive: ${TCP_CLIENT_SO_KEEPALIVE:true}
+      tcp-no-delay: ${TCP_CLIENT_TCP_NODELAY:true}
     monitoring:
-      enabled: true
-      tick-ms: 2000
+      enabled: ${TCP_CLIENT_MONITORING_ENABLED:true}
+      tick-ms: ${TCP_CLIENT_MONITORING_TICK:2000}

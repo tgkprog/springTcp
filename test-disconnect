@@ -1,0 +1,118 @@
+#!/bin/bash
+# Test server disconnect detection
+
+cd "$(dirname "$0")"
+
+echo "=========================================="
+echo "Server Disconnect Detection Test"
+echo "=========================================="
+
+# Clean up
+pkill -9 -f "java.*tcp" 2>/dev/null
+sleep 2
+rm -f logs/*
+
+wait_for_port() {
+    local port=$1
+    local timeout=$2
+    local elapsed=0
+    while [ $elapsed -lt $timeout ]; do
+        if nc -z localhost $port >/dev/null 2>&1; then
+            return 0
+        fi
+        sleep 1
+        elapsed=$((elapsed + 1))
+    done
+    return 1
+}
+
+wait_for_log() {
+    local file=$1
+    local pattern=$2
+    local timeout=$3
+    local elapsed=0
+    while [ $elapsed -lt $timeout ]; do
+        if [ -f "$file" ] && grep -q "$pattern" "$file"; then
+            return 0
+        fi
+        sleep 1
+        elapsed=$((elapsed + 1))
+    done
+    return 1
+}
+
+# Start server
+echo "1. Starting server..."
+java -jar tcp-server/target/tcp-server-1.0.0.jar > /dev/null 2>&1 &
+SRV_PID=$!
+
+echo "Waiting for server to start on port 5039..."
+if ! wait_for_port 5039 30; then
+    echo "❌ Server failed to start on port 5039 in 30 seconds"
+    pkill -9 -f "java.*tcp" 2>/dev/null
+    exit 1
+fi
+echo "   ✅ Server is listening on port 5039"
+
+# Start client with stdin kept open
+echo "2. Starting client (monitoring enabled)..."
+tail -f /dev/null | TCP_CLIENT_MODE=terminal java -jar tcp-client/target/tcp-client-1.0.0.jar --tcp.client.monitoring.enabled=true --tcp.client.monitoring.tick-ms=2000 > /dev/null 2>&1 &
+CLIENT_PID=$!
+
+echo "Waiting for client to start and connect..."
+if ! wait_for_log "logs/tcp-client.log" "Successfully connected to server" 60; then
+    echo "❌ Client failed to connect in 60 seconds"
+    tail -n 50 logs/tcp-client.log
+    kill $CLIENT_PID 2>/dev/null
+    pkill -9 -f "java.*tcp" 2>/dev/null
+    exit 1
+fi
+echo "   ✅ Client successfully connected"
+
+echo ""
+echo "3. Waiting for monitoring to run at least one successful check..."
+if ! wait_for_log "logs/tcp-client.log" "Probe SUCCESS" 20; then
+    echo "❌ Monitoring probe didn't run or succeed"
+    tail -n 50 logs/tcp-client.log
+    kill $CLIENT_PID 2>/dev/null
+    pkill -9 -f "java.*tcp" 2>/dev/null
+    exit 1
+fi
+echo "   ✅ Monitoring check succeeded"
+
+echo ""
+echo "4. Killing server now..."
+kill -9 $SRV_PID
+
+echo "Waiting for client to detect disconnect..."
+if ! wait_for_log "logs/tcp-client.log" "health check failed" 30; then
+    echo "❌ Client failed to detect disconnect in 30 seconds"
+    tail -n 50 logs/tcp-client.log
+else
+    echo "   ✅ Disconnect detected"
+fi
+
+echo ""
+echo "5. Connection status summary:"
+HEALTH_FAILS=$(grep "health check failed" logs/tcp-client.log 2>/dev/null | wc -l)
+RECONNECTS=$(grep "Triggering immediate reconnection" logs/tcp-client.log 2>/dev/null | wc -l)
+echo "   Health check failures: $HEALTH_FAILS"
+echo "   Reconnection attempts: $RECONNECTS"
+
+if [ "$HEALTH_FAILS" -gt "0" ] && [ "$RECONNECTS" -gt "0" ]; then
+    echo ""
+    echo "✅✅✅ SUCCESS! Server disconnection detected and reconnection triggered!"
+else
+    echo ""
+    echo "❌ FAIL: Disconnection not detected properly"
+fi
+
+echo ""
+echo "6. Cleaning up..."
+kill $CLIENT_PID 2>/dev/null
+pkill -9 -f "java.*tcp" 2>/dev/null
+
+echo ""
+echo "=========================================="
+echo "Test Complete"
+echo "=========================================="
