@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: tcp-client
+
+tcp:
+  client:
+    host: localhost
+    port: 5039
+    connection:
+      persistent: true
+      timeout: 550
+      read-timeout: 5000
+      retry:
+        enabled: true
+        max-attempts: 9999
+        wait-between-retries: 150
+    socket:
+      so-timeout: 5000
+      so-keep-alive: true
+      tcp-no-delay: true
+    monitoring:
+      enabled: true
+      tick-ms: 2000

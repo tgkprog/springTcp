@@ -1,0 +1,28 @@
+#!/bin/bash
+# Run TCP Server
+
+echo "=========================================="
+echo "Starting TCP Server"
+echo "=========================================="
+
+# Change to project root
+cd "$(dirname "$0")"
+
+# Create logs directory if it doesn't exist
+mkdir -p logs
+
+# Check if JAR exists
+if [ ! -f "tcp-server/target/tcp-server-1.0.0.jar" ]; then
+    echo "ERROR: Server JAR not found!"
+    echo "Please run ./bld first to build the project"
+    exit 1
+fi
+
+echo "Server starting on port 5039..."
+echo "Logs: logs/tcp-server.log"
+echo "Press Ctrl+C to stop"
+echo "=========================================="
+echo ""
+
+# Run the server JAR directly
+java -jar tcp-server/target/tcp-server-1.0.0.jar

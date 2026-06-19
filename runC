@@ -1,0 +1,32 @@
+#!/bin/bash
+# Run TCP Client
+
+echo "=========================================="
+echo "Starting TCP Client"
+echo "=========================================="
+
+# Change to project root
+cd "$(dirname "$0")"
+
+# Create logs directory if it doesn't exist
+mkdir -p logs
+
+# Check if JAR exists
+if [ ! -f "tcp-client/target/tcp-client-1.0.0.jar" ]; then
+    echo "ERROR: Client JAR not found!"
+    echo "Please run ./bld first to build the project"
+    exit 1
+fi
+
+echo "Connecting to server at localhost:5039..."
+echo "Logs: logs/tcp-client.log"
+echo "Type 'exit' to quit"
+echo "=========================================="
+echo ""
+
+# Run the client JAR directly
+# java -jar tcp-client/target/tcp-client-1.0.0.jar
+  java -jar tcp-client/target/tcp-client-1.0.0.jar \
+       --tcp.client.monitoring.enabled=true \
+       --tcp.client.monitoring.tick-ms=2000
+

@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: tcp-server
+
+server:
+  port: 8080
+
+tcp:
+  server:
+    port: 5039
+    connection:
+      pool-size: 10
+      backlog: 100
+    socket:
+      so-timeout: 30000
+      so-keep-alive: true
+      tcp-no-delay: true
+      so-linger: -1
+
+logging:
+  level:
+    root: INFO
+    com.tcp.tgk.server: INFO
+    org.springframework.integration: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/tcp-server.log
+  logback:
+    rollingpolicy:
+      max-file-size: 6MB
+      max-history: 20
+      clean-history-on-start: false
+      file-name-pattern: logs/tcp-server.%i.log
+      total-size-cap: 0

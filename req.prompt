@@ -1,0 +1,24 @@
+Client and server tcp
+both in Java 17
+Using spring boot tcp for server and client, using maven    .
+
+One sub module of project will be server and the other
+client
+
+create a docs/ folder with more details on spec below
+
+
+
+Server  : waits for connections in PORT (default 5039)
+Can receive 3 kinds of commands :
+1) probe
+    a) shallow
+    b) deep
+2) mgt
+    a) request for info
+    b) time
+    c) capabilites
+
+  3) math server simple arithmetic math problem addition (using notation m: 5 + 10), subtraction (using notation m: 5 - 10),
+     division, multiplication, mod, to the power off
+

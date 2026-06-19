@@ -1,0 +1,94 @@
+================================================================================
+CONNECTION MONITORING FEATURE - SUMMARY
+================================================================================
+
+✅ IMPLEMENTED: Optional connection health monitoring for TCP client
+
+FEATURES:
+---------
+1. Atomic Status Tracking
+   - States: UNKNOWN, CONNECTING, CONNECTED, ERROR
+   - Thread-safe via AtomicReference
+   - Accessible via client 'status' command
+
+2. Scheduled Health Checks
+   - Sends probe:shallow periodically
+   - Default interval: 2000ms (configurable)
+   - Disabled by default (opt-in feature)
+
+3. Automatic Error Recovery
+   - ERROR state is transient
+   - Immediately triggers reconnection
+   - Background thread for non-blocking reconnect
+   - Flow: ERROR → CONNECTING → CONNECTED
+
+4. Configuration
+   tcp.client.monitoring.enabled: false (default)
+   tcp.client.monitoring.tick-ms: 2000 (default)
+
+USAGE:
+------
+Enable in application.yml:
+  tcp:
+    client:
+      monitoring:
+        enabled: true
+        tick-ms: 2000
+
+Or via command-line:
+  java -jar tcp-client.jar \
+    --tcp.client.monitoring.enabled=true \
+    --tcp.client.monitoring.tick-ms=3000
+
+Check status in client:
+  > status
+  Connection Status: CONNECTED
+
+FILES CHANGED:
+--------------
+New:
+  - ConnectionStatus.java (enum)
+  - docs/CONNECTION_MONITORING.md (documentation)
+  - test-monitoring (test script)
+  - MONITORING_IMPLEMENTATION.md (summary)
+
+Modified:
+  - TcpClientService.java (monitoring logic)
+  - TcpClientApplication.java (@EnableScheduling, status command)
+  - TcpClientConfig.java (config properties)
+  - application.yml (monitoring settings)
+
+REQUIREMENTS MET:
+-----------------
+✅ Optional monitoring (disabled by default)
+✅ Configurable tick interval (default 2000ms)
+✅ Shallow probe task
+✅ Atomic boolean status (using AtomicReference<enum>)
+✅ Status states: UNKNOWN, CONNECTING, CONNECTED, ERROR
+✅ Transient ERROR state
+✅ Immediate reconnection on error
+✅ Status changes to CONNECTING during reconnect
+
+TESTING:
+--------
+1. Run: ./test-monitoring
+2. Check: logs/tcp-client.log
+3. Try: status command in client CLI
+
+DOCUMENTATION:
+--------------
+- docs/CONNECTION_MONITORING.md (detailed guide)
+- FINAL_CONFIG.md (updated with monitoring)
+- README.md (updated with doc links)
+
+BUILD & RUN:
+------------
+./bld         # Rebuild with new feature
+./runS        # Start server
+./runC        # Start client (monitoring disabled)
+
+# Or with monitoring:
+java -jar tcp-client/target/tcp-client-1.0.0.jar \
+  --tcp.client.monitoring.enabled=true
+
+================================================================================
