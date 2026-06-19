@@ -256,6 +256,9 @@ public class TcpClientService {
     }
 
     private void ensureConnected() throws Exception {
+        if (stateMachine.getCurrentState() == ConnectionStateMachine.ConnectionState.INIT_IDLE) {
+            throw new Exception("Not connected. Please connect first using the Reconnect button or press Enter in the Address field.");
+        }
         if (!stateMachine.isConnected() || activeConnection == null || !activeConnection.isOpen()) {
             log.info("Connection lost, reconnecting...");
             connectToServer();

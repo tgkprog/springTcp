@@ -93,8 +93,9 @@ public class SwingUiFrame {
         topPanel.add(statusIndicator, gbc);
 
         // Status Label
-        statusLabel = new JLabel("UNKNOWN");
+        statusLabel = new JLabel("INIT_IDLE");
         statusLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+        statusLabel.setForeground(Color.GRAY); // Gray for idle state
         gbc.gridx = 1;
         gbc.gridy = 0;
         topPanel.add(statusLabel, gbc);

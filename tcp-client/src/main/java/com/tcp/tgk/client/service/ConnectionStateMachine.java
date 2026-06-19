@@ -20,7 +20,7 @@ public class ConnectionStateMachine {
     private ApplicationEventPublisher eventPublisher;
     
     public enum ConnectionState {
-        UNKNOWN("Initial state, not yet attempted"),
+        INIT_IDLE("Initial idle state, waiting for connection trigger"),
         CONNECTING("Attempting to establish connection"),
         CONNECTED("Successfully connected to server"),
         DISCONNECTED("Cleanly disconnected from server"),
@@ -38,7 +38,7 @@ public class ConnectionStateMachine {
         }
     }
     
-    private final AtomicReference<ConnectionState> currentState = new AtomicReference<>(ConnectionState.UNKNOWN);
+    private final AtomicReference<ConnectionState> currentState = new AtomicReference<>(ConnectionState.INIT_IDLE);
     private volatile long stateChangeTimestamp = System.currentTimeMillis();
     private volatile String lastErrorMessage = null;
     
@@ -140,7 +140,7 @@ public class ConnectionStateMachine {
         }
         // Define allowed transitions
         switch (from) {
-            case UNKNOWN:
+            case INIT_IDLE:
                 return to == ConnectionState.CONNECTING || to == ConnectionState.CONNECTED || to == ConnectionState.ERROR;
                 
             case CONNECTING:

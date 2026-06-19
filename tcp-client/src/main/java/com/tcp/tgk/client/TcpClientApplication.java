@@ -31,10 +31,22 @@ public class TcpClientApplication {
     public CommandLineRunner commandLineRunner(
             TcpClientService clientService,
             TerminalRunner terminalRunner,
-            SwingUiFrame swingUiFrame) {
+            SwingUiFrame swingUiFrame,
+            @org.springframework.beans.factory.annotation.Value("${tcp.client.mode:both}") String mode) {
         return args -> {
-            System.out.println("Establishing initial connection...");
-            clientService.connectToServer();
+            System.out.println("=================================================");
+            System.out.println("TCP Client Initialized");
+            System.out.println("Target Server IP  : " + clientService.getHost());
+            System.out.println("Target Server Port: " + clientService.getPort());
+            System.out.println("Startup Mode      : " + mode);
+            System.out.println("=================================================");
+            
+            if ("terminal".equalsIgnoreCase(mode)) {
+                System.out.println("Establishing initial connection...");
+                clientService.connectToServer();
+            } else {
+                System.out.println("Skipping auto-connection on startup (waiting for user trigger).");
+            }
             
             // Launch Swing UI frame if enabled
             swingUiFrame.showUi();
