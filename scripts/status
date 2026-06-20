@@ -1,0 +1,10 @@
+#!/bin/bash
+# -----------------------------------------------------------------------------
+# status
+# Displays the status of the "mathServer" systemd service.
+# -----------------------------------------------------------------------------
+
+SERVICE_NAME="mathServer"
+
+echo "=== ${SERVICE_NAME} Service Status ==="
+systemctl status "$SERVICE_NAME" --no-pager
