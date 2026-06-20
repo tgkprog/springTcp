@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-Network & Relay Lab Plan</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg-base: #0b0f19;
@@ -14,11 +17,11 @@
             --bg-card: rgba(30, 41, 59, 0.4);
             --border-glow: rgba(59, 130, 246, 0.15);
             --border-subtle: rgba(255, 255, 255, 0.08);
-            
+
             --text-primary: #f8fafc;
             --text-secondary: #94a3b8;
             --text-muted: #64748b;
-            
+
             --clr-primary: #3b82f6;
             --clr-primary-glow: rgba(59, 130, 246, 0.4);
             --clr-success: #10b981;
@@ -38,7 +41,7 @@
 
         body {
             background-color: var(--bg-base);
-            background-image: 
+            background-image:
                 radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.08) 0px, transparent 50%),
                 radial-gradient(at 50% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
                 radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.03) 0px, transparent 50%);
@@ -85,7 +88,7 @@
             border-radius: 16px;
             padding: 30px;
             margin-bottom: 30px;
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
             transition: border-color 0.3s, box-shadow 0.3s;
         }
 
@@ -339,7 +342,7 @@
 
         .copy-btn:hover {
             color: var(--text-primary);
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             border-color: var(--text-secondary);
         }
 
@@ -422,7 +425,7 @@
         }
 
         .badge {
-            background: rgba(255,255,255,0.04);
+            background: rgba(255, 255, 255, 0.04);
             border: 1px solid var(--border-subtle);
             color: var(--text-secondary);
             padding: 4px 10px;
@@ -438,211 +441,235 @@
             border-radius: 50%;
             margin-right: 6px;
         }
-        .status-dot.green { background-color: var(--clr-success); box-shadow: 0 0 6px var(--clr-success); }
-        .status-dot.red { background-color: var(--clr-danger); box-shadow: 0 0 6px var(--clr-danger); }
+
+        .status-dot.green {
+            background-color: var(--clr-success);
+            box-shadow: 0 0 6px var(--clr-success);
+        }
+
+        .status-dot.red {
+            background-color: var(--clr-danger);
+            box-shadow: 0 0 6px var(--clr-danger);
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <header>
-        <h1>Multi-Network & Relay Lab</h1>
-        <p class="lead">Interactive architecture plan and control sheet for local network namespace isolation and Java 26 TCP Relay simulation.</p>
-    </header>
+    <div class="container">
+        <header>
+            <h1>Multi-Network & Relay Lab</h1>
+            <p class="lead">Interactive architecture plan and control sheet for local network namespace isolation and
+                Java 26 TCP Relay simulation.</p>
+        </header>
 
-    <!-- Interactive Configurator & Topology -->
-    <section class="glass-card">
-        <div class="card-title">
-            <span>LAB SETTINGS</span> Network Parameter Configuration
-        </div>
-        <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.95rem;">
-            Modify variables below. The interactive network topology map and generated configuration/run scripts will update in real-time.
-        </p>
-
-        <div class="config-grid">
-            <div class="form-group">
-                <label for="param-x1">Relay Listen Port (X1)</label>
-                <input type="number" id="param-x1" value="5038">
+        <!-- Interactive Configurator & Topology -->
+        <section class="glass-card">
+            <div class="card-title">
+                <span>LAB SETTINGS</span> Network Parameter Configuration
             </div>
-            <div class="form-group">
-                <label for="param-i1">VPS IP Address (i1)</label>
-                <input type="text" id="param-i1" value="38.242.235.170">
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.95rem;">
+                Modify variables below. The interactive network topology map and generated configuration/run scripts
+                will update in real-time.
+            </p>
+
+            <div class="config-grid">
+                <div class="form-group">
+                    <label for="param-x1">Relay Listen Port (X1)</label>
+                    <input type="number" id="param-x1" value="5038">
+                </div>
+                <div class="form-group">
+                    <label for="param-i1">VPS IP Address (i1)</label>
+                    <input type="text" id="param-i1" value="$ip2">
+                </div>
+                <div class="form-group">
+                    <label for="param-x2">VPS Server Port (X2)</label>
+                    <input type="number" id="param-x2" value="5039">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="param-x2">VPS Server Port (X2)</label>
-                <input type="number" id="param-x2" value="5039">
+            <div class="config-grid">
+                <div class="form-group">
+                    <label for="param-ip-c">Client Interface IP</label>
+                    <input type="text" id="param-ip-c" value="10.200.1.2">
+                </div>
+                <div class="form-group">
+                    <label for="param-ip-r">Relay Interface IP</label>
+                    <input type="text" id="param-ip-r" value="10.200.2.2">
+                </div>
+                <div class="form-group">
+                    <label for="param-iface">Host WAN Interface</label>
+                    <input type="text" id="param-iface" value="eth0" placeholder="e.g. eth0, wlan0">
+                </div>
             </div>
-        </div>
-        <div class="config-grid">
-            <div class="form-group">
-                <label for="param-ip-c">Client Interface IP</label>
-                <input type="text" id="param-ip-c" value="10.200.1.2">
+
+            <div class="topology-container">
+                <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 15px; color: var(--text-secondary);">
+                    INTERACTIVE NETWORK TOPOLOGY MAP</h3>
+
+                <svg class="topo-svg" viewBox="0 0 800 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Links -->
+                    <line id="link-c2r" class="link-line active" x1="180" y1="110" x2="350" y2="110" />
+                    <line id="link-r2v" class="link-line active" x1="450" y1="110" x2="620" y2="110" />
+
+                    <!-- Client Namespace -->
+                    <rect class="node-rect client active" x="20" y="50" width="160" height="120" />
+                    <text class="topo-text" x="35" y="75">Client Network</text>
+                    <text class="topo-subtext" x="35" y="100">ns: netns_client</text>
+                    <text id="txt-ip-c" class="topo-subtext" x="35" y="120">IP: 10.200.1.2</text>
+                    <text class="topo-subtext" x="35" y="145">App: TCP Client</text>
+
+                    <!-- Relay Namespace -->
+                    <rect class="node-rect relay active" x="350" y="50" width="160" height="120" />
+                    <text class="topo-text" x="365" y="75">Relay Network</text>
+                    <text class="topo-subtext" x="365" y="100">ns: netns_relay</text>
+                    <text id="txt-ip-r" class="topo-subtext" x="365" y="120">IP: 10.200.2.2</text>
+                    <text id="txt-port-x1" class="topo-subtext" x="365" y="145">Port: X1 (5038)</text>
+
+                    <!-- Remote VPS -->
+                    <rect class="node-rect vps active" x="620" y="50" width="160" height="120" />
+                    <text class="topo-text" x="635" y="75">Remote VPS</text>
+                    <text class="topo-subtext" x="635" y="100">Location: Internet</text>
+                    <text id="txt-ip-vps" class="topo-subtext" x="635" y="120">IP: $ip2</text>
+                    <text id="txt-port-x2" class="topo-subtext" x="635" y="145">Port: X2 (5039)</text>
+
+                    <!-- Interfaces / Labels on lines -->
+                    <rect x="230" y="98" width="70" height="24" rx="4" fill="#0f172a" stroke="rgba(255,255,255,0.08)" />
+                    <text id="lbl-link-c2r" class="topo-subtext" x="240" y="114" fill="#38bdf8"
+                        style="font-size: 10px;">veth_c</text>
+
+                    <rect x="515" y="98" width="80" height="24" rx="4" fill="#0f172a" stroke="rgba(255,255,255,0.08)" />
+                    <text id="lbl-link-r2v" class="topo-subtext" x="525" y="114" fill="#10b981"
+                        style="font-size: 10px;">NAT/WAN</text>
+                </svg>
+
+                <div class="controls-panel">
+                    <button id="btn-toggle-client" class="btn btn-danger" onclick="toggleClientLink()">
+                        <span class="status-dot green" id="dot-client"></span>
+                        Disable Client Network
+                    </button>
+                    <button id="btn-toggle-relay" class="btn btn-danger" onclick="toggleRelayLink()">
+                        <span class="status-dot green" id="dot-relay"></span>
+                        Disable Relay Network
+                    </button>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="param-ip-r">Relay Interface IP</label>
-                <input type="text" id="param-ip-r" value="10.200.2.2">
-            </div>
-            <div class="form-group">
-                <label for="param-iface">Host WAN Interface</label>
-                <input type="text" id="param-iface" value="eth0" placeholder="e.g. eth0, wlan0">
-            </div>
-        </div>
+        </section>
 
-        <div class="topology-container">
-            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 15px; color: var(--text-secondary);">INTERACTIVE NETWORK TOPOLOGY MAP</h3>
-            
-            <svg class="topo-svg" viewBox="0 0 800 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Links -->
-                <line id="link-c2r" class="link-line active" x1="180" y1="110" x2="350" y2="110" />
-                <line id="link-r2v" class="link-line active" x1="450" y1="110" x2="620" y2="110" />
+        <!-- Layout of Details & Scripts -->
+        <div class="layout-grid">
 
-                <!-- Client Namespace -->
-                <rect class="node-rect client active" x="20" y="50" width="160" height="120" />
-                <text class="topo-text" x="35" y="75">Client Network</text>
-                <text class="topo-subtext" x="35" y="100">ns: netns_client</text>
-                <text id="txt-ip-c" class="topo-subtext" x="35" y="120">IP: 10.200.1.2</text>
-                <text class="topo-subtext" x="35" y="145">App: TCP Client</text>
+            <!-- Left Side: Interactive Scripts & Plans -->
+            <main>
+                <div class="glass-card">
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchTab(event, 'tab-setup')">1. Setup Script</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'tab-teardown')">2. Teardown</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'tab-run')">3. Run Apps</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'tab-fault')">4. Fault Sim</button>
+                    </div>
 
-                <!-- Relay Namespace -->
-                <rect class="node-rect relay active" x="350" y="50" width="160" height="120" />
-                <text class="topo-text" x="365" y="75">Relay Network</text>
-                <text class="topo-subtext" x="365" y="100">ns: netns_relay</text>
-                <text id="txt-ip-r" class="topo-subtext" x="365" y="120">IP: 10.200.2.2</text>
-                <text id="txt-port-x1" class="topo-subtext" x="365" y="145">Port: X1 (5038)</text>
+                    <!-- Setup Tab -->
+                    <div id="tab-setup" class="tab-content active">
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                            This script configures two isolated network namespaces, connects them via host routing, and
+                            sets up NAT masquerading for internet access in the relay namespace.
+                        </p>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <span>setup-networks.sh (Run with sudo)</span>
+                                <button class="copy-btn" onclick="copyCode('code-setup')">Copy</button>
+                            </div>
+                            <pre><code id="code-setup"># Loading parameters...</code></pre>
+                        </div>
+                    </div>
 
-                <!-- Remote VPS -->
-                <rect class="node-rect vps active" x="620" y="50" width="160" height="120" />
-                <text class="topo-text" x="635" y="75">Remote VPS</text>
-                <text class="topo-subtext" x="635" y="100">Location: Internet</text>
-                <text id="txt-ip-vps" class="topo-subtext" x="635" y="120">IP: 38.242.235.170</text>
-                <text id="txt-port-x2" class="topo-subtext" x="635" y="145">Port: X2 (5039)</text>
+                    <!-- Teardown Tab -->
+                    <div id="tab-teardown" class="tab-content">
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                            Completely tears down the isolated namespaces, deletes virtual links, and clears related
+                            host routing tables and firewall rules.
+                        </p>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <span>teardown-networks.sh (Run with sudo)</span>
+                                <button class="copy-btn" onclick="copyCode('code-teardown')">Copy</button>
+                            </div>
+                            <pre><code id="code-teardown"># Loading parameters...</code></pre>
+                        </div>
+                    </div>
 
-                <!-- Interfaces / Labels on lines -->
-                <rect x="230" y="98" width="70" height="24" rx="4" fill="#0f172a" stroke="rgba(255,255,255,0.08)" />
-                <text id="lbl-link-c2r" class="topo-subtext" x="240" y="114" fill="#38bdf8" style="font-size: 10px;">veth_c</text>
+                    <!-- Run Apps Tab -->
+                    <div id="tab-run" class="tab-content">
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                            Commands to execute the Relay Server and the TCP Client inside their respective isolated
+                            network namespaces. Note that the Client UI execution forwards X11 to render the Swing
+                            window on your desktop.
+                        </p>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <span>Start Relay Server (in netns_relay)</span>
+                                <button class="copy-btn" onclick="copyCode('code-run-relay')">Copy</button>
+                            </div>
+                            <pre><code id="code-run-relay"># Loading...</code></pre>
+                        </div>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <span>Start TCP Client UI/Terminal (in netns_client)</span>
+                                <button class="copy-btn" onclick="copyCode('code-run-client')">Copy</button>
+                            </div>
+                            <pre><code id="code-run-client"># Loading...</code></pre>
+                        </div>
+                    </div>
 
-                <rect x="515" y="98" width="80" height="24" rx="4" fill="#0f172a" stroke="rgba(255,255,255,0.08)" />
-                <text id="lbl-link-r2v" class="topo-subtext" x="525" y="114" fill="#10b981" style="font-size: 10px;">NAT/WAN</text>
-            </svg>
+                    <!-- Fault Simulation Tab -->
+                    <div id="tab-fault" class="tab-content">
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                            Quick actions to take down and bring back up the virtual interfaces from the host,
+                            simulating network outages.
+                        </p>
+                        <h4 style="font-size: 0.9rem; color: #60a5fa; margin-bottom: 8px;">Simulating Client Disconnect
+                            (Client Network Fault)</h4>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <span>Bash Commands</span>
+                                <button class="copy-btn" onclick="copyCode('code-sim-client')">Copy</button>
+                            </div>
+                            <pre><code id="code-sim-client"># Loading...</code></pre>
+                        </div>
 
-            <div class="controls-panel">
-                <button id="btn-toggle-client" class="btn btn-danger" onclick="toggleClientLink()">
-                    <span class="status-dot green" id="dot-client"></span>
-                    Disable Client Network
-                </button>
-                <button id="btn-toggle-relay" class="btn btn-danger" onclick="toggleRelayLink()">
-                    <span class="status-dot green" id="dot-relay"></span>
-                    Disable Relay Network
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- Layout of Details & Scripts -->
-    <div class="layout-grid">
-        
-        <!-- Left Side: Interactive Scripts & Plans -->
-        <main>
-            <div class="glass-card">
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="switchTab(event, 'tab-setup')">1. Setup Script</button>
-                    <button class="tab-btn" onclick="switchTab(event, 'tab-teardown')">2. Teardown</button>
-                    <button class="tab-btn" onclick="switchTab(event, 'tab-run')">3. Run Apps</button>
-                    <button class="tab-btn" onclick="switchTab(event, 'tab-fault')">4. Fault Sim</button>
+                        <h4 style="font-size: 0.9rem; color: #60a5fa; margin-bottom: 8px; margin-top: 20px;">Simulating
+                            Relay Server Outage / Disconnect</h4>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <span>Bash Commands</span>
+                                <button class="copy-btn" onclick="copyCode('code-sim-relay')">Copy</button>
+                            </div>
+                            <pre><code id="code-sim-relay"># Loading...</code></pre>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Setup Tab -->
-                <div id="tab-setup" class="tab-content active">
+                <!-- Java Relay Server Architecture Card -->
+                <div class="glass-card">
+                    <div class="card-title">
+                        <span>RELAY SERVER</span> Java 26 Pipe Relay Design
+                    </div>
                     <p style="color: var(--text-secondary); margin-bottom: 15px;">
-                        This script configures two isolated network namespaces, connects them via host routing, and sets up NAT masquerading for internet access in the relay namespace.
+                        We plan to build a clean, bidirectional TCP forwarder in
+                        `/data/code/gt/tcp_tgk/relayServer/RelayServer.java` compiled and run directly using Java 26.
                     </p>
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span>setup-networks.sh (Run with sudo)</span>
-                            <button class="copy-btn" onclick="copyCode('code-setup')">Copy</button>
-                        </div>
-                        <pre><code id="code-setup"># Loading parameters...</code></pre>
-                    </div>
-                </div>
-
-                <!-- Teardown Tab -->
-                <div id="tab-teardown" class="tab-content">
-                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
-                        Completely tears down the isolated namespaces, deletes virtual links, and clears related host routing tables and firewall rules.
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                        Using Java 26's native <strong>Virtual Threads</strong> (Project Loom) allows us to spawn
+                        dedicated connection-handling worker loops without thrashing resources or needing complex
+                        non-blocking NIO abstractions.
                     </p>
+
+                    <h4 style="font-size: 0.95rem; color: #60a5fa; margin-bottom: 10px;">Planned Class Architecture</h4>
                     <div class="code-container">
                         <div class="code-header">
-                            <span>teardown-networks.sh (Run with sudo)</span>
-                            <button class="copy-btn" onclick="copyCode('code-teardown')">Copy</button>
+                            <span>RelayServer.java Outline</span>
                         </div>
-                        <pre><code id="code-teardown"># Loading parameters...</code></pre>
-                    </div>
-                </div>
-
-                <!-- Run Apps Tab -->
-                <div id="tab-run" class="tab-content">
-                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
-                        Commands to execute the Relay Server and the TCP Client inside their respective isolated network namespaces. Note that the Client UI execution forwards X11 to render the Swing window on your desktop.
-                    </p>
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span>Start Relay Server (in netns_relay)</span>
-                            <button class="copy-btn" onclick="copyCode('code-run-relay')">Copy</button>
-                        </div>
-                        <pre><code id="code-run-relay"># Loading...</code></pre>
-                    </div>
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span>Start TCP Client UI/Terminal (in netns_client)</span>
-                            <button class="copy-btn" onclick="copyCode('code-run-client')">Copy</button>
-                        </div>
-                        <pre><code id="code-run-client"># Loading...</code></pre>
-                    </div>
-                </div>
-
-                <!-- Fault Simulation Tab -->
-                <div id="tab-fault" class="tab-content">
-                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
-                        Quick actions to take down and bring back up the virtual interfaces from the host, simulating network outages.
-                    </p>
-                    <h4 style="font-size: 0.9rem; color: #60a5fa; margin-bottom: 8px;">Simulating Client Disconnect (Client Network Fault)</h4>
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span>Bash Commands</span>
-                            <button class="copy-btn" onclick="copyCode('code-sim-client')">Copy</button>
-                        </div>
-                        <pre><code id="code-sim-client"># Loading...</code></pre>
-                    </div>
-
-                    <h4 style="font-size: 0.9rem; color: #60a5fa; margin-bottom: 8px; margin-top: 20px;">Simulating Relay Server Outage / Disconnect</h4>
-                    <div class="code-container">
-                        <div class="code-header">
-                            <span>Bash Commands</span>
-                            <button class="copy-btn" onclick="copyCode('code-sim-relay')">Copy</button>
-                        </div>
-                        <pre><code id="code-sim-relay"># Loading...</code></pre>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Java Relay Server Architecture Card -->
-            <div class="glass-card">
-                <div class="card-title">
-                    <span>RELAY SERVER</span> Java 26 Pipe Relay Design
-                </div>
-                <p style="color: var(--text-secondary); margin-bottom: 15px;">
-                    We plan to build a clean, bidirectional TCP forwarder in `/data/code/gt/tcp_tgk/relayServer/RelayServer.java` compiled and run directly using Java 26.
-                </p>
-                <p style="color: var(--text-secondary); margin-bottom: 20px;">
-                    Using Java 26's native <strong>Virtual Threads</strong> (Project Loom) allows us to spawn dedicated connection-handling worker loops without thrashing resources or needing complex non-blocking NIO abstractions.
-                </p>
-
-                <h4 style="font-size: 0.95rem; color: #60a5fa; margin-bottom: 10px;">Planned Class Architecture</h4>
-                <div class="code-container">
-                    <div class="code-header">
-                        <span>RelayServer.java Outline</span>
-                    </div>
-                    <pre><code>import java.io.*;
+                        <pre><code>import java.io.*;
 import java.net.*;
 
 public class RelayServer {
@@ -719,171 +746,173 @@ public class RelayServer {
         } catch (IOException ignored) {}
     }
 }</code></pre>
+                    </div>
                 </div>
-            </div>
-        </main>
+            </main>
 
-        <!-- Right Side: Design Notes & Specifications -->
-        <aside>
-            <div class="glass-card">
-                <div class="card-title">
-                    <span>SPECS</span> Tech & Environment
-                </div>
-                <ul class="spec-list" style="margin-bottom: 20px;">
-                    <li><strong>Operating System</strong>: Linux (Ubuntu)</li>
-                    <li><strong>JDK Version</strong>: OpenJDK 26.0.1 (Loom enabled)</li>
-                    <li><strong>Isolation Mechanism</strong>: ip-netns (Network Namespaces)</li>
-                    <li><strong>Communication</strong>: Bidirectional TCP forwarder</li>
-                    <li><strong>GUI Support</strong>: X11 socket forwarding from netns</li>
-                </ul>
+            <!-- Right Side: Design Notes & Specifications -->
+            <aside>
+                <div class="glass-card">
+                    <div class="card-title">
+                        <span>SPECS</span> Tech & Environment
+                    </div>
+                    <ul class="spec-list" style="margin-bottom: 20px;">
+                        <li><strong>Operating System</strong>: Linux (Ubuntu)</li>
+                        <li><strong>JDK Version</strong>: OpenJDK 26.0.1 (Loom enabled)</li>
+                        <li><strong>Isolation Mechanism</strong>: ip-netns (Network Namespaces)</li>
+                        <li><strong>Communication</strong>: Bidirectional TCP forwarder</li>
+                        <li><strong>GUI Support</strong>: X11 socket forwarding from netns</li>
+                    </ul>
 
-                <div class="badge-list">
-                    <span class="badge">Virtual Threads</span>
-                    <span class="badge">iptables/NAT</span>
-                    <span class="badge">veth pairs</span>
-                    <span class="badge">sysctl ip_forward</span>
-                    <span class="badge">X11 Display</span>
+                    <div class="badge-list">
+                        <span class="badge">Virtual Threads</span>
+                        <span class="badge">iptables/NAT</span>
+                        <span class="badge">veth pairs</span>
+                        <span class="badge">sysctl ip_forward</span>
+                        <span class="badge">X11 Display</span>
+                    </div>
                 </div>
-            </div>
 
-            <div class="glass-card">
-                <div class="card-title">
-                    <span>PLAN</span> Verification steps
+                <div class="glass-card">
+                    <div class="card-title">
+                        <span>PLAN</span> Verification steps
+                    </div>
+                    <ol
+                        style="margin-left: 20px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem;">
+                        <li>
+                            <strong style="color: var(--text-primary);">1. Setup Namespaces</strong><br>
+                            Run the Setup script to build the virtual networking topology.
+                        </li>
+                        <li>
+                            <strong style="color: var(--text-primary);">2. Verify Routes</strong><br>
+                            Ping `10.200.2.2` from `netns_client` to confirm routing.
+                        </li>
+                        <li>
+                            <strong style="color: var(--text-primary);">3. Boot Relay</strong><br>
+                            Start Java 26 Relay inside `netns_relay` bound to `10.200.2.2:X1`.
+                        </li>
+                        <li>
+                            <strong style="color: var(--text-primary);">4. Launch Client</strong><br>
+                            Start the GUI client inside `netns_client` and connect to `10.200.2.2:X1`.
+                        </li>
+                        <li>
+                            <strong style="color: var(--text-primary);">5. Induce Faults</strong><br>
+                            Disable interface `veth_c` on host. Confirm client disconnect logs and automatic retry
+                            state.
+                        </li>
+                        <li>
+                            <strong style="color: var(--text-primary);">6. Restore</strong><br>
+                            Bring interface `veth_c` back up. Confirm client auto-recovers and reconnects via the Relay.
+                        </li>
+                    </ol>
                 </div>
-                <ol style="margin-left: 20px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem;">
-                    <li>
-                        <strong style="color: var(--text-primary);">1. Setup Namespaces</strong><br>
-                        Run the Setup script to build the virtual networking topology.
-                    </li>
-                    <li>
-                        <strong style="color: var(--text-primary);">2. Verify Routes</strong><br>
-                        Ping `10.200.2.2` from `netns_client` to confirm routing.
-                    </li>
-                    <li>
-                        <strong style="color: var(--text-primary);">3. Boot Relay</strong><br>
-                        Start Java 26 Relay inside `netns_relay` bound to `10.200.2.2:X1`.
-                    </li>
-                    <li>
-                        <strong style="color: var(--text-primary);">4. Launch Client</strong><br>
-                        Start the GUI client inside `netns_client` and connect to `10.200.2.2:X1`.
-                    </li>
-                    <li>
-                        <strong style="color: var(--text-primary);">5. Induce Faults</strong><br>
-                        Disable interface `veth_c` on host. Confirm client disconnect logs and automatic retry state.
-                    </li>
-                    <li>
-                        <strong style="color: var(--text-primary);">6. Restore</strong><br>
-                        Bring interface `veth_c` back up. Confirm client auto-recovers and reconnects via the Relay.
-                    </li>
-                </ol>
-            </div>
-        </aside>
+            </aside>
+        </div>
     </div>
-</div>
 
-<script>
-    // Tab switching
-    function switchTab(evt, tabId) {
-        const contents = document.getElementsByClassName("tab-content");
-        for (let i = 0; i < contents.length; i++) {
-            contents[i].classList.remove("active");
+    <script>
+        // Tab switching
+        function switchTab(evt, tabId) {
+            const contents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].classList.remove("active");
+            }
+            const buttons = document.getElementsByClassName("tab-btn");
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove("active");
+            }
+            document.getElementById(tabId).classList.add("active");
+            evt.currentTarget.classList.add("active");
         }
-        const buttons = document.getElementsByClassName("tab-btn");
-        for (let i = 0; i < buttons.length; i++) {
-            buttons[i].classList.remove("active");
+
+        // Copy to clipboard
+        function copyCode(id) {
+            const text = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector(`[onclick="copyCode('${id}')"]`);
+                const origText = btn.innerText;
+                btn.innerText = "Copied!";
+                btn.style.color = "var(--clr-success)";
+                setTimeout(() => {
+                    btn.innerText = origText;
+                    btn.style.color = "var(--text-secondary)";
+                }, 1500);
+            });
         }
-        document.getElementById(tabId).classList.add("active");
-        evt.currentTarget.classList.add("active");
-    }
 
-    // Copy to clipboard
-    function copyCode(id) {
-        const text = document.getElementById(id).innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            const btn = document.querySelector(`[onclick="copyCode('${id}')"]`);
-            const origText = btn.innerText;
-            btn.innerText = "Copied!";
-            btn.style.color = "var(--clr-success)";
-            setTimeout(() => {
-                btn.innerText = origText;
-                btn.style.color = "var(--text-secondary)";
-            }, 1500);
-        });
-    }
+        // Interactive state
+        let clientLinkUp = true;
+        let relayLinkUp = true;
 
-    // Interactive state
-    let clientLinkUp = true;
-    let relayLinkUp = true;
+        function toggleClientLink() {
+            clientLinkUp = !clientLinkUp;
+            const line = document.getElementById("link-c2r");
+            const btn = document.getElementById("btn-toggle-client");
+            const dot = document.getElementById("dot-client");
 
-    function toggleClientLink() {
-        clientLinkUp = !clientLinkUp;
-        const line = document.getElementById("link-c2r");
-        const btn = document.getElementById("btn-toggle-client");
-        const dot = document.getElementById("dot-client");
-        
-        if (clientLinkUp) {
-            line.classList.remove("broken");
-            line.classList.add("active");
-            btn.className = "btn btn-danger";
-            btn.innerHTML = `<span class="status-dot green" id="dot-client"></span>Disable Client Network`;
-        } else {
-            line.classList.remove("active");
-            line.classList.add("broken");
-            btn.className = "btn btn-success";
-            btn.innerHTML = `<span class="status-dot red" id="dot-client"></span>Enable Client Network`;
+            if (clientLinkUp) {
+                line.classList.remove("broken");
+                line.classList.add("active");
+                btn.className = "btn btn-danger";
+                btn.innerHTML = `<span class="status-dot green" id="dot-client"></span>Disable Client Network`;
+            } else {
+                line.classList.remove("active");
+                line.classList.add("broken");
+                btn.className = "btn btn-success";
+                btn.innerHTML = `<span class="status-dot red" id="dot-client"></span>Enable Client Network`;
+            }
         }
-    }
 
-    function toggleRelayLink() {
-        relayLinkUp = !relayLinkUp;
-        const line = document.getElementById("link-r2v");
-        const btn = document.getElementById("btn-toggle-relay");
-        const dot = document.getElementById("dot-relay");
-        
-        if (relayLinkUp) {
-            line.classList.remove("broken");
-            line.classList.add("active");
-            btn.className = "btn btn-danger";
-            btn.innerHTML = `<span class="status-dot green" id="dot-relay"></span>Disable Relay Network`;
-        } else {
-            line.classList.remove("active");
-            line.classList.add("broken");
-            btn.className = "btn btn-success";
-            btn.innerHTML = `<span class="status-dot red" id="dot-relay"></span>Enable Relay Network`;
+        function toggleRelayLink() {
+            relayLinkUp = !relayLinkUp;
+            const line = document.getElementById("link-r2v");
+            const btn = document.getElementById("btn-toggle-relay");
+            const dot = document.getElementById("dot-relay");
+
+            if (relayLinkUp) {
+                line.classList.remove("broken");
+                line.classList.add("active");
+                btn.className = "btn btn-danger";
+                btn.innerHTML = `<span class="status-dot green" id="dot-relay"></span>Disable Relay Network`;
+            } else {
+                line.classList.remove("active");
+                line.classList.add("broken");
+                btn.className = "btn btn-success";
+                btn.innerHTML = `<span class="status-dot red" id="dot-relay"></span>Enable Relay Network`;
+            }
         }
-    }
 
-    // Dynamic Script Generation
-    const x1Input = document.getElementById("param-x1");
-    const i1Input = document.getElementById("param-i1");
-    const x2Input = document.getElementById("param-x2");
-    const ipCInput = document.getElementById("param-ip-c");
-    const ipRInput = document.getElementById("param-ip-r");
-    const ifaceInput = document.getElementById("param-iface");
+        // Dynamic Script Generation
+        const x1Input = document.getElementById("param-x1");
+        const i1Input = document.getElementById("param-i1");
+        const x2Input = document.getElementById("param-x2");
+        const ipCInput = document.getElementById("param-ip-c");
+        const ipRInput = document.getElementById("param-ip-r");
+        const ifaceInput = document.getElementById("param-iface");
 
-    function updateScripts() {
-        const x1 = x1Input.value;
-        const i1 = i1Input.value;
-        const x2 = x2Input.value;
-        const ipC = ipCInput.value;
-        const ipR = ipRInput.value;
-        const iface = ifaceInput.value || "eth0";
+        function updateScripts() {
+            const x1 = x1Input.value;
+            const i1 = i1Input.value;
+            const x2 = x2Input.value;
+            const ipC = ipCInput.value;
+            const ipR = ipRInput.value;
+            const iface = ifaceInput.value || "eth0";
 
-        // Extract subnets
-        const subnetC = ipC.substring(0, ipC.lastIndexOf('.')) + '.0/24';
-        const gwC = ipC.substring(0, ipC.lastIndexOf('.')) + '.1';
-        const subnetR = ipR.substring(0, ipR.lastIndexOf('.')) + '.0/24';
-        const gwR = ipR.substring(0, ipR.lastIndexOf('.')) + '.1';
+            // Extract subnets
+            const subnetC = ipC.substring(0, ipC.lastIndexOf('.')) + '.0/24';
+            const gwC = ipC.substring(0, ipC.lastIndexOf('.')) + '.1';
+            const subnetR = ipR.substring(0, ipR.lastIndexOf('.')) + '.0/24';
+            const gwR = ipR.substring(0, ipR.lastIndexOf('.')) + '.1';
 
-        // Update Topology Labels
-        document.getElementById("txt-ip-c").textContent = `IP: ${ipC}`;
-        document.getElementById("txt-ip-r").textContent = `IP: ${ipR}`;
-        document.getElementById("txt-port-x1").textContent = `Port: X1 (${x1})`;
-        document.getElementById("txt-ip-vps").textContent = `IP: ${i1}`;
-        document.getElementById("txt-port-x2").textContent = `Port: X2 (${x2})`;
+            // Update Topology Labels
+            document.getElementById("txt-ip-c").textContent = `IP: ${ipC}`;
+            document.getElementById("txt-ip-r").textContent = `IP: ${ipR}`;
+            document.getElementById("txt-port-x1").textContent = `Port: X1 (${x1})`;
+            document.getElementById("txt-ip-vps").textContent = `IP: ${i1}`;
+            document.getElementById("txt-port-x2").textContent = `Port: X2 (${x2})`;
 
-        // 1. Setup script
-        document.getElementById("code-setup").textContent = `#!/bin/bash
+            // 1. Setup script
+            document.getElementById("code-setup").textContent = `#!/bin/bash
 # ----------------------------------------------------
 # Multi-Network Namespace Setup Script
 # Run this script with sudo (e.g. sudo ./setup-networks.sh)
@@ -948,8 +977,8 @@ echo "Client Network: ${ipC}/24 via gateway ${gwC}"
 echo "Relay Network:  ${ipR}/24 via gateway ${gwR}"
 `;
 
-        // 2. Teardown script
-        document.getElementById("code-teardown").textContent = `#!/bin/bash
+            // 2. Teardown script
+            document.getElementById("code-teardown").textContent = `#!/bin/bash
 # ----------------------------------------------------
 # Multi-Network Namespace Teardown Script
 # Run this script with sudo
@@ -972,8 +1001,8 @@ sudo iptables -t nat -D POSTROUTING -s ${subnetC} -o ${iface} -j MASQUERADE 2>/d
 echo "=== Network Cleanup Complete ==="
 `;
 
-        // 3. Run Apps tab
-        document.getElementById("code-run-relay").textContent = `# Run Relay Server inside the netns_relay namespace
+            // 3. Run Apps tab
+            document.getElementById("code-run-relay").textContent = `# Run Relay Server inside the netns_relay namespace
 # It binds to the namespace's static IP ${ipR} on port ${x1} and connects to remote ${i1}:${x2}
 # Java 26 Home: /usr/lib/jvm/jdk-26.0.1/
 
@@ -985,7 +1014,7 @@ sudo ip netns exec netns_relay \\
   /usr/lib/jvm/jdk-26.0.1/bin/java -cp relayServer/target RelayServer ${x1} ${i1} ${x2}
 `;
 
-        document.getElementById("code-run-client").textContent = `# Run TCP Client inside the netns_client namespace
+            document.getElementById("code-run-client").textContent = `# Run TCP Client inside the netns_client namespace
 # We configure it to connect to the Relay Server static IP (${ipR}) and port (${x1})
 # We pass X11 display parameters so Swing can render GUI on your Desktop
 
@@ -1005,29 +1034,30 @@ sudo ip netns exec netns_client \\
        --tcp.client.mode=both
 `;
 
-        // 4. Fault Simulation tab
-        document.getElementById("code-sim-client").textContent = `# To bring client link DOWN (simulate disconnected network interface):
+            // 4. Fault Simulation tab
+            document.getElementById("code-sim-client").textContent = `# To bring client link DOWN (simulate disconnected network interface):
 sudo ip link set dev veth_c down
 
 # To bring client link back UP:
 sudo ip link set dev veth_c up
 `;
 
-        document.getElementById("code-sim-relay").textContent = `# To bring relay link DOWN (simulates relay going off the local network):
+            document.getElementById("code-sim-relay").textContent = `# To bring relay link DOWN (simulates relay going off the local network):
 sudo ip link set dev veth_r down
 
 # To bring relay link back UP:
 sudo ip link set dev veth_r up
 `;
-    }
+        }
 
-    // Attach listeners
-    [x1Input, i1Input, x2Input, ipCInput, ipRInput, ifaceInput].forEach(inp => {
-        inp.addEventListener("input", updateScripts);
-    });
+        // Attach listeners
+        [x1Input, i1Input, x2Input, ipCInput, ipRInput, ifaceInput].forEach(inp => {
+            inp.addEventListener("input", updateScripts);
+        });
 
-    // Run initial gen
-    updateScripts();
-</script>
+        // Run initial gen
+        updateScripts();
+    </script>
 </body>
+
 </html>

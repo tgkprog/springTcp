@@ -1,0 +1,4 @@
+export JAVA_HOME=/usr/lib/jvm/jdk-26.0.1
+if [[ ":$PATH:" != *":$JAVA_HOME/bin:"* ]]; then
+    export PATH="$JAVA_HOME/bin:$PATH"
+fi

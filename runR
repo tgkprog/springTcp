@@ -1,0 +1,38 @@
+#!/bin/bash
+# -----------------------------------------------------------------------------
+# Run TCP Relay Server
+# -----------------------------------------------------------------------------
+
+# Change to project root directory
+cd "$(dirname "$0")"
+
+# Configurable Timeout and Retry Variables (with defaults)
+export RELAY_CONNECT_TIMEOUT_MS=${RELAY_CONNECT_TIMEOUT_MS:-250}
+# 0 means infinite / no read inactivity timeout
+export RELAY_READ_TIMEOUT_MS=${RELAY_READ_TIMEOUT_MS:-230}
+export RELAY_RECONNECT_WAIT_MS=${RELAY_RECONNECT_WAIT_MS:-270}
+export RELAY_MAX_ATTEMPTS=${RELAY_MAX_ATTEMPTS:-9999}
+
+# Target ports/hosts (editable defaults or overridden by args)
+LISTEN_PORT=${1:-5038}
+VPS_IP=${2:-$ip2}
+VPS_PORT=${3:-5039}
+
+echo "=========================================="
+echo "Starting TCP Relay Server"
+echo "=========================================="
+echo "Parameters:"
+echo "  Local Listen Port:  $LISTEN_PORT"
+echo "  VPS Target:         $VPS_IP:$VPS_PORT"
+echo "  Connect Timeout:    $RELAY_CONNECT_TIMEOUT_MS ms"
+echo "  Read Timeout:       $RELAY_READ_TIMEOUT_MS ms"
+echo "  Reconnect Wait:     $RELAY_RECONNECT_WAIT_MS ms"
+echo "  Max Attempts:       $RELAY_MAX_ATTEMPTS"
+echo "=========================================="
+echo "Note: To run inside the relay namespace, use:"
+echo "  sudo ip netns exec netns_relay ./runR [port] [vps-ip] [vps-port]"
+echo "=========================================="
+echo ""
+. /b/j26
+# Run using JDK 26
+java -cp relayServer/target RelayServer "$LISTEN_PORT" "$VPS_IP" "$VPS_PORT"

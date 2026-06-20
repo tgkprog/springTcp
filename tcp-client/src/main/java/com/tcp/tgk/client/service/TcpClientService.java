@@ -87,6 +87,8 @@ public class TcpClientService {
         log.info("TCP Client Service initialized");
         log.info("Connection Monitoring: {} (tick: {}ms)", monitoringEnabled ? "ENABLED" : "DISABLED", monitoringTickMs);
         log.info("Using ConnectionStateMachine for state tracking");
+        System.err.printf("[CLIENT INIT] Connect Timeout: %d ms, Read Timeout: %d ms, Retry Wait: %d ms%n", 
+            connectionTimeout, readTimeout, waitBetweenRetries);
     }
 
     @Scheduled(fixedDelay = 5000, initialDelay = 5000)

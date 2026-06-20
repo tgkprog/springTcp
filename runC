@@ -18,9 +18,9 @@ if [ ! -f "tcp-client/target/tcp-client-1.0.0.jar" ]; then
     exit 1
 fi
 
-export TCP_CLIENT_HOST=${TCP_CLIENT_HOST:-38.242.235.170}
-export TCP_CLIENT_HOST=127.0.0.1
-export TCP_CLIENT_PORT=${TCP_CLIENT_PORT:-5038}
+export TCP_CLIENT_HOST=${TCP_CLIENT_HOST:-$ip2}
+# export TCP_CLIENT_HOST=127.0.0.1
+export TCP_CLIENT_PORT=${TCP_CLIENT_PORT:-5039}
 export TCP_CLIENT_TIMEOUT=100
 export TCP_CLIENT_RETRY_WAIT=70
 #terminal, ui, both
@@ -32,7 +32,8 @@ echo "=========================================="
 echo ""
 # Run the client JAR directly
 # java -jar tcp-client/target/tcp-client-1.0.0.jar
-  java -jar tcp-client/target/tcp-client-1.0.0.jar \
+  java -DTCP_CLIENT_HOST=$TCP_CLIENT_HOST \
+  -jar tcp-client/target/tcp-client-1.0.0.jar \
        --tcp.client.monitoring.enabled=true \
-       --tcp.client.monitoring.tick-ms=2000
+       --tcp.client.monitoring.tick-ms=2000 
 

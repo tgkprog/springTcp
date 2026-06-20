@@ -1,0 +1,1 @@
+sudo ip netns exec netns_relay ./runR

@@ -1,0 +1,86 @@
+To stop right at the top
+
+
+sudo iptables -I OUTPUT 1 -d $ip2 -p tcp --dport 5039 -j DROP
+sudo iptables -I INPUT 1 -s $ip2 -p tcp --sport 5039 -j DROP
+
+To undo/delete these rules:
+
+sudo iptables -D OUTPUT -d $ip2 -p tcp --dport 5039 -j DROP
+sudo iptables -D INPUT  -s $ip2 -p tcp --sport 5039 -j DROP
+                        
+						---
+
+
+
+sudo iptables -A OUTPUT -d $ip2 -p tcp --dport 5039 -j DROP
+
+sudo iptables -A INPUT  -s $ip2 -p tcp --sport 5039 -j DROP
+
+
+
+To remove the rules:
+
+
+
+sudo iptables -D OUTPUT -d $ip2 -p tcp --dport 5039 -j DROP
+
+sudo iptables -D INPUT  -s $ip2 -p tcp --sport 5039 -j DROP
+
+
+
+To confirm the rules are present:
+
+
+
+sudo iptables -L -n -v
+
+
+
+To watch the TCP connection:
+
+
+
+watch -n1 'ss -tan | grep 5039'
+
+
+
+This will simulate the network path to that server disappearing while leaving the VPS itself running.                    
+
+=============================================================================
+CORRECT COMMANDS FOR NETWORK NAMESPACES / ROUTED TRAFFIC
+=============================================================================
+
+If the client is running inside the 'netns_client' namespace, the traffic is 
+either forwarded by the host or isolated inside the namespace's routing table.
+The host's INPUT and OUTPUT chains will not see this traffic.
+
+Use one of the two options below:
+
+--- OPTION 1: BLOCK IN HOST'S FORWARD CHAIN (Recommended) ---
+Since the host acts as the router, we can block the forwarded packets:
+
+To apply:
+sudo iptables -A FORWARD -d $ip2 -p tcp --dport 5039 -j DROP
+sudo iptables -A FORWARD -s $ip2 -p tcp --sport 5039 -j DROP
+
+To remove:
+sudo iptables -D FORWARD -d $ip2 -p tcp --dport 5039 -j DROP
+sudo iptables -D FORWARD -s $ip2 -p tcp --sport 5039 -j DROP
+
+
+--- OPTION 2: BLOCK INSIDE THE NAMESPACE ITSELF ---
+Add rules directly to the 'netns_client' namespace iptables table:
+
+To apply:
+sudo ip netns exec netns_client iptables -A OUTPUT -d $ip2 -p tcp --dport 5039 -j DROP
+sudo ip netns exec netns_client iptables -A INPUT  -s $ip2 -p tcp --sport 5039 -j DROP
+
+To remove:
+sudo ip netns exec netns_client iptables -D OUTPUT -d $ip2 -p tcp --dport 5039 -j DROP
+sudo ip netns exec netns_client iptables -D INPUT  -s $ip2 -p tcp --sport 5039 -j DROP
+
+
+-----
+
+

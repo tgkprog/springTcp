@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A transparent TCP Relay Server (Pipe Server) that listens on a local port
@@ -9,10 +10,16 @@ import java.net.*;
 public class RelayServer {
     private static final int BUFFER_SIZE = 8192;
 
+    // Configurable parameters via environment variables
+    private static final int connectTimeout = getEnvInt("RELAY_CONNECT_TIMEOUT_MS", 5000);
+    private static final int readTimeout = getEnvInt("RELAY_READ_TIMEOUT_MS", 0); // 0 means infinite
+    private static final int reconnectWait = getEnvInt("RELAY_RECONNECT_WAIT_MS", 1000);
+    private static final int maxAttempts = getEnvInt("RELAY_MAX_ATTEMPTS", 3);
+
     public static void main(String[] args) {
         if (args.length < 3) {
             System.err.println("Usage: java RelayServer <listen-port> <vps-ip> <vps-port>");
-            System.err.println("Example: java RelayServer 5038 38.242.235.170 5039");
+            System.err.println("Example: java RelayServer 5038 $ip2 5039");
             System.exit(1);
         }
 
@@ -39,6 +46,10 @@ public class RelayServer {
         System.out.printf("[RELAY] Starting Relay Server...%n");
         System.out.printf("[RELAY] Listening locally on port: %d%n", listenPort);
         System.out.printf("[RELAY] Forwarding to remote VPS:  %s:%d%n", vpsHost, vpsPort);
+        System.out.printf("[RELAY] Connect Timeout (VPS):    %d ms%n", connectTimeout);
+        System.out.printf("[RELAY] Read Timeout:             %d ms (%s)%n", readTimeout, readTimeout == 0 ? "infinite" : "active");
+        System.out.printf("[RELAY] Reconnect Wait (VPS):     %d ms%n", reconnectWait);
+        System.out.printf("[RELAY] Max Connect Attempts:     %d%n", maxAttempts);
         System.out.println("[RELAY] Press Ctrl+C to terminate.");
 
         try (ServerSocket serverSocket = new ServerSocket(listenPort)) {
@@ -64,33 +75,76 @@ public class RelayServer {
     private static void handleSession(Socket clientSocket, String vpsHost, int vpsPort) {
         String clientAddress = clientSocket.getRemoteSocketAddress().toString();
         
-        try (Socket vpsSocket = new Socket()) {
+        try {
             // Set socket options for low latency and quick detection of drops
             clientSocket.setTcpNoDelay(true);
             clientSocket.setKeepAlive(true);
+            if (readTimeout > 0) {
+                clientSocket.setSoTimeout(readTimeout);
+            }
+        } catch (SocketException e) {
+            System.err.printf("[RELAY][%s] Failed to set client socket options: %s%n", clientAddress, e.getMessage());
+        }
 
-            System.out.printf("[RELAY][%s] Connecting to remote VPS %s:%d...%n", clientAddress, vpsHost, vpsPort);
-            // Connect to VPS with a timeout of 5 seconds
-            vpsSocket.connect(new InetSocketAddress(vpsHost, vpsPort), 5000);
-            vpsSocket.setTcpNoDelay(true);
-            vpsSocket.setKeepAlive(true);
+        Socket vpsSocket = null;
+        boolean connected = false;
+        int attempt = 0;
+
+        while (attempt < maxAttempts) {
+            attempt++;
+            vpsSocket = new Socket();
+            try {
+                System.out.printf("[RELAY][%s] Connecting to remote VPS %s:%d (attempt %d/%d)...%n", 
+                    clientAddress, vpsHost, vpsPort, attempt, maxAttempts);
+                
+                vpsSocket.connect(new InetSocketAddress(vpsHost, vpsPort), connectTimeout);
+                vpsSocket.setTcpNoDelay(true);
+                vpsSocket.setKeepAlive(true);
+                if (readTimeout > 0) {
+                    vpsSocket.setSoTimeout(readTimeout);
+                }
+                connected = true;
+                break;
+            } catch (IOException e) {
+                System.err.printf("[RELAY][%s] Connection attempt %d failed: %s%n", clientAddress, attempt, e.getMessage());
+                closeQuietly(vpsSocket);
+                vpsSocket = null;
+                if (attempt < maxAttempts) {
+                    try {
+                        System.out.printf("[RELAY][%s] Waiting %dms before retrying...%n", clientAddress, reconnectWait);
+                        Thread.sleep(reconnectWait);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!connected || vpsSocket == null) {
+            System.err.printf("[RELAY][%s] Failed to establish connection to VPS after %d attempts.%n", clientAddress, maxAttempts);
+            closeQuietly(clientSocket);
+            return;
+        }
+
+        final Socket finalVpsSocket = vpsSocket;
+        try {
             System.out.printf("[RELAY][%s] Bidirectional pipe established with remote VPS.%n", clientAddress);
 
             // Create two virtual threads for bidirectional data forwarding
-            Thread clientToVpsThread = Thread.startVirtualThread(() -> pipe(clientSocket, vpsSocket, "Client -> VPS", clientAddress));
-            Thread vpsToClientThread = Thread.startVirtualThread(() -> pipe(vpsSocket, clientSocket, "VPS -> Client", clientAddress));
+            Thread clientToVpsThread = Thread.startVirtualThread(() -> pipe(clientSocket, finalVpsSocket, "Client -> VPS", clientAddress));
+            Thread vpsToClientThread = Thread.startVirtualThread(() -> pipe(finalVpsSocket, clientSocket, "VPS -> Client", clientAddress));
 
             // Wait for both forwarding loops to complete
             clientToVpsThread.join();
             vpsToClientThread.join();
 
-        } catch (IOException e) {
-            System.err.printf("[RELAY][%s] Connection setup failed: %s%n", clientAddress, e.getMessage());
         } catch (InterruptedException e) {
             System.err.printf("[RELAY][%s] Session interrupted: %s%n", clientAddress, e.getMessage());
             Thread.currentThread().interrupt();
         } finally {
             closeQuietly(clientSocket);
+            closeQuietly(finalVpsSocket);
             System.out.printf("[RELAY][%s] Connection session closed.%n", clientAddress);
         }
     }
@@ -121,5 +175,17 @@ public class RelayServer {
             }
         } catch (IOException ignored) {
         }
+    }
+
+    private static int getEnvInt(String name, int defaultValue) {
+        String val = System.getenv(name);
+        if (val != null) {
+            try {
+                return Integer.parseInt(val);
+            } catch (NumberFormatException e) {
+                System.err.printf("[RELAY] Warning: Invalid value for env %s: %s. Using default: %d%n", name, val, defaultValue);
+            }
+        }
+        return defaultValue;
     }
 }
