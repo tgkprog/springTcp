@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class MonitoringTask {
     
-    private static final Logger log = LoggerFactory.getLogger(MonitoringTask.class);
+    private static final Logger log = LoggerFactory.getLogger("client-check");
 
     @Scheduled(fixedDelay = 3000, initialDelay = 3000)
     public void testTask() {

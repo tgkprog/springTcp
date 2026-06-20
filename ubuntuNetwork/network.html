@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Network & Relay Lab Plan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0b0f19;
+            --bg-surface: rgba(20, 26, 45, 0.6);
+            --bg-card: rgba(30, 41, 59, 0.4);
+            --border-glow: rgba(59, 130, 246, 0.15);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            --clr-primary: #3b82f6;
+            --clr-primary-glow: rgba(59, 130, 246, 0.4);
+            --clr-success: #10b981;
+            --clr-success-glow: rgba(16, 185, 129, 0.4);
+            --clr-warning: #f59e0b;
+            --clr-warning-glow: rgba(245, 158, 11, 0.4);
+            --clr-danger: #ef4444;
+            --clr-danger-glow: rgba(239, 68, 68, 0.4);
+            --clr-accent: #8b5cf6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.08) 0px, transparent 50%),
+                radial-gradient(at 50% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.03) 0px, transparent 50%);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.6;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a78bfa, #3b82f6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .lead {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Glass Cards */
+        .glass-card {
+            background: var(--bg-surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .glass-card:hover {
+            border-color: var(--border-glow);
+            box-shadow: 0 15px 35px -5px rgba(59, 130, 246, 0.08);
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #60a5fa;
+        }
+
+        .card-title span {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--clr-primary);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        /* Configurations Grid */
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-primary);
+            padding: 10px 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--clr-primary);
+            box-shadow: 0 0 0 3px var(--clr-primary-glow);
+        }
+
+        /* Network Topology Interactive */
+        .topology-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+            background: rgba(10, 15, 30, 0.4);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .topo-svg {
+            width: 100%;
+            max-width: 900px;
+            height: auto;
+        }
+
+        .node-rect {
+            fill: rgba(30, 41, 59, 0.8);
+            stroke: var(--border-subtle);
+            stroke-width: 2;
+            rx: 8;
+            transition: all 0.3s;
+        }
+
+        .node-rect.active {
+            stroke: var(--clr-primary);
+            filter: drop-shadow(0 0 8px var(--clr-primary-glow));
+        }
+
+        .node-rect.client {
+            stroke: var(--clr-accent);
+        }
+
+        .node-rect.relay {
+            stroke: var(--clr-success);
+        }
+
+        .node-rect.vps {
+            stroke: var(--clr-warning);
+        }
+
+        .link-line {
+            stroke: var(--text-muted);
+            stroke-width: 3;
+            stroke-dasharray: 6 4;
+            animation: dash 30s linear infinite;
+            transition: all 0.3s;
+        }
+
+        .link-line.active {
+            stroke: var(--clr-success);
+        }
+
+        .link-line.broken {
+            stroke: var(--clr-danger);
+            stroke-dasharray: none;
+            animation: none;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -1000;
+            }
+        }
+
+        .topo-text {
+            fill: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .topo-subtext {
+            fill: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--clr-primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+            box-shadow: 0 0 12px var(--clr-primary-glow);
+        }
+
+        .btn-danger {
+            background-color: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .btn-danger:hover {
+            background-color: var(--clr-danger);
+            color: #fff;
+            box-shadow: 0 0 12px var(--clr-danger-glow);
+        }
+
+        .btn-success {
+            background-color: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #a7f3d0;
+        }
+
+        .btn-success:hover {
+            background-color: var(--clr-success);
+            color: #fff;
+            box-shadow: 0 0 12px var(--clr-success-glow);
+        }
+
+        /* Code Blocks */
+        .code-container {
+            position: relative;
+            margin: 15px 0 25px;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0f172a;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            padding: 10px 16px;
+            border: 1px solid var(--border-subtle);
+            border-bottom: none;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        pre {
+            background: #090d16;
+            border: 1px solid var(--border-subtle);
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 0;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #38bdf8;
+            display: block;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.05);
+            border-color: var(--text-secondary);
+        }
+
+        /* Tabs System */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            padding: 10px 16px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--clr-primary);
+            border-bottom-color: var(--clr-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Grid for architecture and notes */
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .layout-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .spec-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .spec-list li {
+            position: relative;
+            padding-left: 24px;
+            color: var(--text-secondary);
+        }
+
+        .spec-list li::before {
+            content: "✦";
+            position: absolute;
+            left: 0;
+            color: var(--clr-accent);
+        }
+
+        .badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .badge {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .status-dot.green { background-color: var(--clr-success); box-shadow: 0 0 6px var(--clr-success); }
+        .status-dot.red { background-color: var(--clr-danger); box-shadow: 0 0 6px var(--clr-danger); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Multi-Network & Relay Lab</h1>
+        <p class="lead">Interactive architecture plan and control sheet for local network namespace isolation and Java 26 TCP Relay simulation.</p>
+    </header>
+
+    <!-- Interactive Configurator & Topology -->
+    <section class="glass-card">
+        <div class="card-title">
+            <span>LAB SETTINGS</span> Network Parameter Configuration
+        </div>
+        <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.95rem;">
+            Modify variables below. The interactive network topology map and generated configuration/run scripts will update in real-time.
+        </p>
+
+        <div class="config-grid">
+            <div class="form-group">
+                <label for="param-x1">Relay Listen Port (X1)</label>
+                <input type="number" id="param-x1" value="5038">
+            </div>
+            <div class="form-group">
+                <label for="param-i1">VPS IP Address (i1)</label>
+                <input type="text" id="param-i1" value="38.242.235.170">
+            </div>
+            <div class="form-group">
+                <label for="param-x2">VPS Server Port (X2)</label>
+                <input type="number" id="param-x2" value="5039">
+            </div>
+        </div>
+        <div class="config-grid">
+            <div class="form-group">
+                <label for="param-ip-c">Client Interface IP</label>
+                <input type="text" id="param-ip-c" value="10.200.1.2">
+            </div>
+            <div class="form-group">
+                <label for="param-ip-r">Relay Interface IP</label>
+                <input type="text" id="param-ip-r" value="10.200.2.2">
+            </div>
+            <div class="form-group">
+                <label for="param-iface">Host WAN Interface</label>
+                <input type="text" id="param-iface" value="eth0" placeholder="e.g. eth0, wlan0">
+            </div>
+        </div>
+
+        <div class="topology-container">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 15px; color: var(--text-secondary);">INTERACTIVE NETWORK TOPOLOGY MAP</h3>
+            
+            <svg class="topo-svg" viewBox="0 0 800 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Links -->
+                <line id="link-c2r" class="link-line active" x1="180" y1="110" x2="350" y2="110" />
+                <line id="link-r2v" class="link-line active" x1="450" y1="110" x2="620" y2="110" />
+
+                <!-- Client Namespace -->
+                <rect class="node-rect client active" x="20" y="50" width="160" height="120" />
+                <text class="topo-text" x="35" y="75">Client Network</text>
+                <text class="topo-subtext" x="35" y="100">ns: netns_client</text>
+                <text id="txt-ip-c" class="topo-subtext" x="35" y="120">IP: 10.200.1.2</text>
+                <text class="topo-subtext" x="35" y="145">App: TCP Client</text>
+
+                <!-- Relay Namespace -->
+                <rect class="node-rect relay active" x="350" y="50" width="160" height="120" />
+                <text class="topo-text" x="365" y="75">Relay Network</text>
+                <text class="topo-subtext" x="365" y="100">ns: netns_relay</text>
+                <text id="txt-ip-r" class="topo-subtext" x="365" y="120">IP: 10.200.2.2</text>
+                <text id="txt-port-x1" class="topo-subtext" x="365" y="145">Port: X1 (5038)</text>
+
+                <!-- Remote VPS -->
+                <rect class="node-rect vps active" x="620" y="50" width="160" height="120" />
+                <text class="topo-text" x="635" y="75">Remote VPS</text>
+                <text class="topo-subtext" x="635" y="100">Location: Internet</text>
+                <text id="txt-ip-vps" class="topo-subtext" x="635" y="120">IP: 38.242.235.170</text>
+                <text id="txt-port-x2" class="topo-subtext" x="635" y="145">Port: X2 (5039)</text>
+
+                <!-- Interfaces / Labels on lines -->
+                <rect x="230" y="98" width="70" height="24" rx="4" fill="#0f172a" stroke="rgba(255,255,255,0.08)" />
+                <text id="lbl-link-c2r" class="topo-subtext" x="240" y="114" fill="#38bdf8" style="font-size: 10px;">veth_c</text>
+
+                <rect x="515" y="98" width="80" height="24" rx="4" fill="#0f172a" stroke="rgba(255,255,255,0.08)" />
+                <text id="lbl-link-r2v" class="topo-subtext" x="525" y="114" fill="#10b981" style="font-size: 10px;">NAT/WAN</text>
+            </svg>
+
+            <div class="controls-panel">
+                <button id="btn-toggle-client" class="btn btn-danger" onclick="toggleClientLink()">
+                    <span class="status-dot green" id="dot-client"></span>
+                    Disable Client Network
+                </button>
+                <button id="btn-toggle-relay" class="btn btn-danger" onclick="toggleRelayLink()">
+                    <span class="status-dot green" id="dot-relay"></span>
+                    Disable Relay Network
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Layout of Details & Scripts -->
+    <div class="layout-grid">
+        
+        <!-- Left Side: Interactive Scripts & Plans -->
+        <main>
+            <div class="glass-card">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab(event, 'tab-setup')">1. Setup Script</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'tab-teardown')">2. Teardown</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'tab-run')">3. Run Apps</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'tab-fault')">4. Fault Sim</button>
+                </div>
+
+                <!-- Setup Tab -->
+                <div id="tab-setup" class="tab-content active">
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        This script configures two isolated network namespaces, connects them via host routing, and sets up NAT masquerading for internet access in the relay namespace.
+                    </p>
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span>setup-networks.sh (Run with sudo)</span>
+                            <button class="copy-btn" onclick="copyCode('code-setup')">Copy</button>
+                        </div>
+                        <pre><code id="code-setup"># Loading parameters...</code></pre>
+                    </div>
+                </div>
+
+                <!-- Teardown Tab -->
+                <div id="tab-teardown" class="tab-content">
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Completely tears down the isolated namespaces, deletes virtual links, and clears related host routing tables and firewall rules.
+                    </p>
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span>teardown-networks.sh (Run with sudo)</span>
+                            <button class="copy-btn" onclick="copyCode('code-teardown')">Copy</button>
+                        </div>
+                        <pre><code id="code-teardown"># Loading parameters...</code></pre>
+                    </div>
+                </div>
+
+                <!-- Run Apps Tab -->
+                <div id="tab-run" class="tab-content">
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Commands to execute the Relay Server and the TCP Client inside their respective isolated network namespaces. Note that the Client UI execution forwards X11 to render the Swing window on your desktop.
+                    </p>
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span>Start Relay Server (in netns_relay)</span>
+                            <button class="copy-btn" onclick="copyCode('code-run-relay')">Copy</button>
+                        </div>
+                        <pre><code id="code-run-relay"># Loading...</code></pre>
+                    </div>
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span>Start TCP Client UI/Terminal (in netns_client)</span>
+                            <button class="copy-btn" onclick="copyCode('code-run-client')">Copy</button>
+                        </div>
+                        <pre><code id="code-run-client"># Loading...</code></pre>
+                    </div>
+                </div>
+
+                <!-- Fault Simulation Tab -->
+                <div id="tab-fault" class="tab-content">
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Quick actions to take down and bring back up the virtual interfaces from the host, simulating network outages.
+                    </p>
+                    <h4 style="font-size: 0.9rem; color: #60a5fa; margin-bottom: 8px;">Simulating Client Disconnect (Client Network Fault)</h4>
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span>Bash Commands</span>
+                            <button class="copy-btn" onclick="copyCode('code-sim-client')">Copy</button>
+                        </div>
+                        <pre><code id="code-sim-client"># Loading...</code></pre>
+                    </div>
+
+                    <h4 style="font-size: 0.9rem; color: #60a5fa; margin-bottom: 8px; margin-top: 20px;">Simulating Relay Server Outage / Disconnect</h4>
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span>Bash Commands</span>
+                            <button class="copy-btn" onclick="copyCode('code-sim-relay')">Copy</button>
+                        </div>
+                        <pre><code id="code-sim-relay"># Loading...</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Java Relay Server Architecture Card -->
+            <div class="glass-card">
+                <div class="card-title">
+                    <span>RELAY SERVER</span> Java 26 Pipe Relay Design
+                </div>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    We plan to build a clean, bidirectional TCP forwarder in `/data/code/gt/tcp_tgk/relayServer/RelayServer.java` compiled and run directly using Java 26.
+                </p>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Using Java 26's native <strong>Virtual Threads</strong> (Project Loom) allows us to spawn dedicated connection-handling worker loops without thrashing resources or needing complex non-blocking NIO abstractions.
+                </p>
+
+                <h4 style="font-size: 0.95rem; color: #60a5fa; margin-bottom: 10px;">Planned Class Architecture</h4>
+                <div class="code-container">
+                    <div class="code-header">
+                        <span>RelayServer.java Outline</span>
+                    </div>
+                    <pre><code>import java.io.*;
+import java.net.*;
+
+public class RelayServer {
+    private static final int BUFFER_SIZE = 8192;
+
+    public static void main(String[] args) {
+        if (args.length < 3) {
+            System.err.println("Usage: java RelayServer &lt;listen-port&gt; &lt;vps-ip&gt; &lt;vps-port&gt;");
+            System.exit(1);
+        }
+        int listenPort = Integer.parseInt(args[0]);
+        String vpsHost = args[1];
+        int vpsPort = Integer.parseInt(args[2]);
+
+        System.out.printf("Relay Server starting: listening on port %d, forwarding to %s:%d%n", 
+            listenPort, vpsHost, vpsPort);
+
+        try (ServerSocket serverSocket = new ServerSocket(listenPort)) {
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                // Spawn a virtual thread to handle each incoming client session
+                Thread.startVirtualThread(() -> handleConnection(clientSocket, vpsHost, vpsPort));
+            }
+        } catch (IOException e) {
+            System.err.println("Server exception: " + e.getMessage());
+        }
+    }
+
+    private static void handleConnection(Socket clientSocket, String vpsHost, int vpsPort) {
+        System.out.printf("New client connection from %s%n", clientSocket.getRemoteSocketAddress());
+        try (Socket vpsSocket = new Socket(vpsHost, vpsPort)) {
+            // Configure TCP socket properties (matching client/server low latency setup)
+            clientSocket.setTcpNoDelay(true);
+            vpsSocket.setTcpNoDelay(true);
+
+            // Create two virtual threads for bidirectional data copy
+            Thread clientToVps = Thread.startVirtualThread(() -> pipe(clientSocket, vpsSocket, "Client -> VPS"));
+            Thread vpsToClient = Thread.startVirtualThread(() -> pipe(vpsSocket, clientSocket, "VPS -> Client"));
+
+            // Wait for both directions to finish
+            clientToVps.join();
+            vpsToClient.join();
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Connection error: " + e.getMessage());
+        } finally {
+            closeQuietly(clientSocket);
+            System.out.println("Session closed cleanly.");
+        }
+    }
+
+    private static void pipe(Socket source, Socket dest, String direction) {
+        try (InputStream in = source.getInputStream();
+             OutputStream out = dest.getOutputStream()) {
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+                out.flush();
+            }
+        } catch (IOException e) {
+            // Socket closed or network error is expected during fault simulation
+            System.out.printf("[%s] Pipe ended: %s%n", direction, e.getMessage());
+        } finally {
+            // Close connection when one end finishes
+            closeQuietly(dest);
+        }
+    }
+
+    private static void closeQuietly(Socket socket) {
+        try {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        } catch (IOException ignored) {}
+    }
+}</code></pre>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Side: Design Notes & Specifications -->
+        <aside>
+            <div class="glass-card">
+                <div class="card-title">
+                    <span>SPECS</span> Tech & Environment
+                </div>
+                <ul class="spec-list" style="margin-bottom: 20px;">
+                    <li><strong>Operating System</strong>: Linux (Ubuntu)</li>
+                    <li><strong>JDK Version</strong>: OpenJDK 26.0.1 (Loom enabled)</li>
+                    <li><strong>Isolation Mechanism</strong>: ip-netns (Network Namespaces)</li>
+                    <li><strong>Communication</strong>: Bidirectional TCP forwarder</li>
+                    <li><strong>GUI Support</strong>: X11 socket forwarding from netns</li>
+                </ul>
+
+                <div class="badge-list">
+                    <span class="badge">Virtual Threads</span>
+                    <span class="badge">iptables/NAT</span>
+                    <span class="badge">veth pairs</span>
+                    <span class="badge">sysctl ip_forward</span>
+                    <span class="badge">X11 Display</span>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-title">
+                    <span>PLAN</span> Verification steps
+                </div>
+                <ol style="margin-left: 20px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem;">
+                    <li>
+                        <strong style="color: var(--text-primary);">1. Setup Namespaces</strong><br>
+                        Run the Setup script to build the virtual networking topology.
+                    </li>
+                    <li>
+                        <strong style="color: var(--text-primary);">2. Verify Routes</strong><br>
+                        Ping `10.200.2.2` from `netns_client` to confirm routing.
+                    </li>
+                    <li>
+                        <strong style="color: var(--text-primary);">3. Boot Relay</strong><br>
+                        Start Java 26 Relay inside `netns_relay` bound to `10.200.2.2:X1`.
+                    </li>
+                    <li>
+                        <strong style="color: var(--text-primary);">4. Launch Client</strong><br>
+                        Start the GUI client inside `netns_client` and connect to `10.200.2.2:X1`.
+                    </li>
+                    <li>
+                        <strong style="color: var(--text-primary);">5. Induce Faults</strong><br>
+                        Disable interface `veth_c` on host. Confirm client disconnect logs and automatic retry state.
+                    </li>
+                    <li>
+                        <strong style="color: var(--text-primary);">6. Restore</strong><br>
+                        Bring interface `veth_c` back up. Confirm client auto-recovers and reconnects via the Relay.
+                    </li>
+                </ol>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<script>
+    // Tab switching
+    function switchTab(evt, tabId) {
+        const contents = document.getElementsByClassName("tab-content");
+        for (let i = 0; i < contents.length; i++) {
+            contents[i].classList.remove("active");
+        }
+        const buttons = document.getElementsByClassName("tab-btn");
+        for (let i = 0; i < buttons.length; i++) {
+            buttons[i].classList.remove("active");
+        }
+        document.getElementById(tabId).classList.add("active");
+        evt.currentTarget.classList.add("active");
+    }
+
+    // Copy to clipboard
+    function copyCode(id) {
+        const text = document.getElementById(id).innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.querySelector(`[onclick="copyCode('${id}')"]`);
+            const origText = btn.innerText;
+            btn.innerText = "Copied!";
+            btn.style.color = "var(--clr-success)";
+            setTimeout(() => {
+                btn.innerText = origText;
+                btn.style.color = "var(--text-secondary)";
+            }, 1500);
+        });
+    }
+
+    // Interactive state
+    let clientLinkUp = true;
+    let relayLinkUp = true;
+
+    function toggleClientLink() {
+        clientLinkUp = !clientLinkUp;
+        const line = document.getElementById("link-c2r");
+        const btn = document.getElementById("btn-toggle-client");
+        const dot = document.getElementById("dot-client");
+        
+        if (clientLinkUp) {
+            line.classList.remove("broken");
+            line.classList.add("active");
+            btn.className = "btn btn-danger";
+            btn.innerHTML = `<span class="status-dot green" id="dot-client"></span>Disable Client Network`;
+        } else {
+            line.classList.remove("active");
+            line.classList.add("broken");
+            btn.className = "btn btn-success";
+            btn.innerHTML = `<span class="status-dot red" id="dot-client"></span>Enable Client Network`;
+        }
+    }
+
+    function toggleRelayLink() {
+        relayLinkUp = !relayLinkUp;
+        const line = document.getElementById("link-r2v");
+        const btn = document.getElementById("btn-toggle-relay");
+        const dot = document.getElementById("dot-relay");
+        
+        if (relayLinkUp) {
+            line.classList.remove("broken");
+            line.classList.add("active");
+            btn.className = "btn btn-danger";
+            btn.innerHTML = `<span class="status-dot green" id="dot-relay"></span>Disable Relay Network`;
+        } else {
+            line.classList.remove("active");
+            line.classList.add("broken");
+            btn.className = "btn btn-success";
+            btn.innerHTML = `<span class="status-dot red" id="dot-relay"></span>Enable Relay Network`;
+        }
+    }
+
+    // Dynamic Script Generation
+    const x1Input = document.getElementById("param-x1");
+    const i1Input = document.getElementById("param-i1");
+    const x2Input = document.getElementById("param-x2");
+    const ipCInput = document.getElementById("param-ip-c");
+    const ipRInput = document.getElementById("param-ip-r");
+    const ifaceInput = document.getElementById("param-iface");
+
+    function updateScripts() {
+        const x1 = x1Input.value;
+        const i1 = i1Input.value;
+        const x2 = x2Input.value;
+        const ipC = ipCInput.value;
+        const ipR = ipRInput.value;
+        const iface = ifaceInput.value || "eth0";
+
+        // Extract subnets
+        const subnetC = ipC.substring(0, ipC.lastIndexOf('.')) + '.0/24';
+        const gwC = ipC.substring(0, ipC.lastIndexOf('.')) + '.1';
+        const subnetR = ipR.substring(0, ipR.lastIndexOf('.')) + '.0/24';
+        const gwR = ipR.substring(0, ipR.lastIndexOf('.')) + '.1';
+
+        // Update Topology Labels
+        document.getElementById("txt-ip-c").textContent = `IP: ${ipC}`;
+        document.getElementById("txt-ip-r").textContent = `IP: ${ipR}`;
+        document.getElementById("txt-port-x1").textContent = `Port: X1 (${x1})`;
+        document.getElementById("txt-ip-vps").textContent = `IP: ${i1}`;
+        document.getElementById("txt-port-x2").textContent = `Port: X2 (${x2})`;
+
+        // 1. Setup script
+        document.getElementById("code-setup").textContent = `#!/bin/bash
+# ----------------------------------------------------
+# Multi-Network Namespace Setup Script
+# Run this script with sudo (e.g. sudo ./setup-networks.sh)
+# ----------------------------------------------------
+
+set -e
+
+echo "=== Enabling IP Routing on Host ==="
+sudo sysctl -w net.ipv4.ip_forward=1
+
+echo "=== Creating Namespaces ==="
+sudo ip netns add netns_client
+sudo ip netns add netns_relay
+
+echo "=== Configuring Client Network (Namespace: netns_client) ==="
+# Create virtual ethernet pair connecting host and client namespace
+sudo ip link add veth_c type veth peer name veth_c_ns
+sudo ip link set veth_c_ns netns netns_client
+
+# Bind gateway IP to host side of the tunnel
+sudo ip addr add ${gwC}/24 dev veth_c
+sudo ip link set veth_c up
+
+# Bind static IP to namespace side of the tunnel and set default route
+sudo ip netns exec netns_client ip addr add ${ipC}/24 dev veth_c_ns
+sudo ip netns exec netns_client ip link set veth_c_ns up
+sudo ip netns exec netns_client ip link set lo up
+sudo ip netns exec netns_client ip route add default via ${gwC}
+
+echo "=== Configuring Relay Network (Namespace: netns_relay) ==="
+# Create virtual ethernet pair connecting host and relay namespace
+sudo ip link add veth_r type veth peer name veth_r_ns
+sudo ip link set veth_r_ns netns netns_relay
+
+# Bind gateway IP to host side of the tunnel
+sudo ip addr add ${gwR}/24 dev veth_r
+sudo ip link set veth_r up
+
+# Bind static IP to namespace side of the tunnel and set default route
+sudo ip netns exec netns_relay ip addr add ${ipR}/24 dev veth_r_ns
+sudo ip netns exec netns_relay ip link set veth_r_ns up
+sudo ip netns exec netns_relay ip link set lo up
+sudo ip netns exec netns_relay ip route add default via ${gwR}
+
+echo "=== Setting Up Host Routing and NAT (Masquerading) ==="
+# Forwarding rules to allow subnets to communicate via the host router
+sudo iptables -A FORWARD -i veth_c -o veth_r -j ACCEPT
+sudo iptables -A FORWARD -i veth_r -o veth_c -j ACCEPT
+
+# Allow subnets to reach the outside internet via host's physical card (${iface})
+sudo iptables -A FORWARD -i veth_c -o ${iface} -j ACCEPT
+sudo iptables -A FORWARD -i veth_r -o ${iface} -j ACCEPT
+sudo iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Perform masquerade translation
+sudo iptables -t nat -A POSTROUTING -s ${subnetC} -o ${iface} -j ACCEPT 2>/dev/null || true
+sudo iptables -t nat -A POSTROUTING -s ${subnetR} -o ${iface} -j MASQUERADE
+sudo iptables -t nat -A POSTROUTING -s ${subnetC} -o ${iface} -j MASQUERADE
+
+echo "=== Setup Completed Successfully ==="
+echo "Client Network: ${ipC}/24 via gateway ${gwC}"
+echo "Relay Network:  ${ipR}/24 via gateway ${gwR}"
+`;
+
+        // 2. Teardown script
+        document.getElementById("code-teardown").textContent = `#!/bin/bash
+# ----------------------------------------------------
+# Multi-Network Namespace Teardown Script
+# Run this script with sudo
+# ----------------------------------------------------
+
+echo "=== Deleting Namespaces and Interfaces ==="
+sudo ip netns del netns_client 2>/dev/null || true
+sudo ip netns del netns_relay 2>/dev/null || true
+sudo ip link del veth_c 2>/dev/null || true
+sudo ip link del veth_r 2>/dev/null || true
+
+echo "=== Cleaning Up Firewall Rules ==="
+sudo iptables -D FORWARD -i veth_c -o veth_r -j ACCEPT 2>/dev/null || true
+sudo iptables -D FORWARD -i veth_r -o veth_c -j ACCEPT 2>/dev/null || true
+sudo iptables -D FORWARD -i veth_c -o ${iface} -j ACCEPT 2>/dev/null || true
+sudo iptables -D FORWARD -i veth_r -o ${iface} -j ACCEPT 2>/dev/null || true
+sudo iptables -t nat -D POSTROUTING -s ${subnetR} -o ${iface} -j MASQUERADE 2>/dev/null || true
+sudo iptables -t nat -D POSTROUTING -s ${subnetC} -o ${iface} -j MASQUERADE 2>/dev/null || true
+
+echo "=== Network Cleanup Complete ==="
+`;
+
+        // 3. Run Apps tab
+        document.getElementById("code-run-relay").textContent = `# Run Relay Server inside the netns_relay namespace
+# It binds to the namespace's static IP ${ipR} on port ${x1} and connects to remote ${i1}:${x2}
+# Java 26 Home: /usr/lib/jvm/jdk-26.0.1/
+
+# Compilation command:
+/usr/lib/jvm/jdk-26.0.1/bin/javac -d relayServer/target relayServer/RelayServer.java
+
+# Run command inside netns:
+sudo ip netns exec netns_relay \\
+  /usr/lib/jvm/jdk-26.0.1/bin/java -cp relayServer/target RelayServer ${x1} ${i1} ${x2}
+`;
+
+        document.getElementById("code-run-client").textContent = `# Run TCP Client inside the netns_client namespace
+# We configure it to connect to the Relay Server static IP (${ipR}) and port (${x1})
+# We pass X11 display parameters so Swing can render GUI on your Desktop
+
+# Build first:
+./bld
+
+# Allow local X server connection:
+xhost +local:
+
+# Run client jar inside netns (run as current user to inherit X authorization):
+sudo ip netns exec netns_client \\
+  runuser -u $(whoami) -g $(id -gn) -- \\
+  env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY \\
+  java -jar tcp-client/target/tcp-client-1.0.0.jar \\
+       --tcp.client.host=${ipR} \\
+       --tcp.client.port=${x1} \\
+       --tcp.client.mode=both
+`;
+
+        // 4. Fault Simulation tab
+        document.getElementById("code-sim-client").textContent = `# To bring client link DOWN (simulate disconnected network interface):
+sudo ip link set dev veth_c down
+
+# To bring client link back UP:
+sudo ip link set dev veth_c up
+`;
+
+        document.getElementById("code-sim-relay").textContent = `# To bring relay link DOWN (simulates relay going off the local network):
+sudo ip link set dev veth_r down
+
+# To bring relay link back UP:
+sudo ip link set dev veth_r up
+`;
+    }
+
+    // Attach listeners
+    [x1Input, i1Input, x2Input, ipCInput, ipRInput, ifaceInput].forEach(inp => {
+        inp.addEventListener("input", updateScripts);
+    });
+
+    // Run initial gen
+    updateScripts();
+</script>
+</body>
+</html>

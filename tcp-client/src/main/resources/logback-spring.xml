@@ -20,10 +20,33 @@
         </triggeringPolicy>
     </appender>
 
+    <!-- File Appender for Check Logs -->
+    <appender name="CHECK_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/client-check.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>logs/client-check.%i.log</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>20</maxIndex>
+        </rollingPolicy>
+        
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>6MB</maxFileSize>
+        </triggeringPolicy>
+    </appender>
+
     <!-- Root Logger - Only to FILE -->
     <root level="INFO">
         <appender-ref ref="FILE"/>
     </root>
+
+    <!-- Check Logger -->
+    <logger name="client-check" level="INFO" additivity="false">
+        <appender-ref ref="CHECK_FILE"/>
+    </logger>
 
     <!-- Application Loggers -->
     <logger name="com.tcp.tgk.client" level="INFO"/>

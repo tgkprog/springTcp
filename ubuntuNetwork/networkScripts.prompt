@@ -1,0 +1,14 @@
+in /data/code/gt/tcp_tgk/ubuntuNetwork
+discuss how to do this, create a network.html :
+
+i'm running the tcp-server in a remote VPS. I can connect the client from local to that server.
+
+I want to create a pipe server (that listens locally on port x1 and connects remote to IP i1 and port X2) and is a relay server between these two, without any filter.
+
+also want two have 2 networks created locally and run each on a seperate network (tcp client and relay server) so can bring one of the networks down to mimic a network fault and later bring it back up.
+
+/data/code/gt/tcp_tgk/relayServer create relay server in using any java tcp framework or pure java 26 if that is good enough
+Java 26 home: /usr/lib/jvm/jdk-26.0.1/
+
+dont code as yet only plan
+

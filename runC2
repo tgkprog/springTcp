@@ -18,21 +18,25 @@ if [ ! -f "tcp-client/target/tcp-client-1.0.0.jar" ]; then
     exit 1
 fi
 
-export TCP_CLIENT_HOST=${TCP_CLIENT_HOST:-38.242.235.170}
-export TCP_CLIENT_HOST=127.0.0.1
-export TCP_CLIENT_PORT=${TCP_CLIENT_PORT:-5038}
+# export TCP_CLIENT_HOST=${TCP_CLIENT_HOST:-38.242.235.170}
+# export TCP_CLIENT_HOST=127.0.0.1
+# export TCP_CLIENT_PORT=${TCP_CLIENT_PORT:-5038}
 export TCP_CLIENT_TIMEOUT=100
 export TCP_CLIENT_RETRY_WAIT=70
 #terminal, ui, both
 export TCP_CLIENT_MODE=ui
-echo "Starting client"
+echo "Starting client inside network"
 echo "Logs: logs/tcp-client.log"
 echo "Type 'exit' to quit"
 echo "=========================================="
 echo ""
 # Run the client JAR directly
-# java -jar tcp-client/target/tcp-client-1.0.0.jar
-  java -jar tcp-client/target/tcp-client-1.0.0.jar \
-       --tcp.client.monitoring.enabled=true \
-       --tcp.client.monitoring.tick-ms=2000
+xhost +local:
 
+sudo ip netns exec netns_client \
+  runuser -u $(whoami) -g $(id -gn) -- \
+  env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY \
+  java -jar tcp-client/target/tcp-client-1.0.0.jar \
+       --tcp.client.host=10.200.2.2 \
+       --tcp.client.port=5038 \
+       --tcp.client.mode=both

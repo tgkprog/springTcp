@@ -71,9 +71,9 @@ echo "   ✅ Client successfully connected"
 
 echo ""
 echo "3. Waiting for monitoring to run at least one successful check..."
-if ! wait_for_log "logs/tcp-client.log" "Probe SUCCESS" 20; then
+if ! wait_for_log "logs/client-check.log" "Probe SUCCESS" 20; then
     echo "❌ Monitoring probe didn't run or succeed"
-    tail -n 50 logs/tcp-client.log
+    tail -n 50 logs/client-check.log
     kill $CLIENT_PID 2>/dev/null
     pkill -9 -f "java.*tcp" 2>/dev/null
     exit 1
@@ -94,8 +94,8 @@ fi
 
 echo ""
 echo "5. Connection status summary:"
-HEALTH_FAILS=$(grep "health check failed" logs/tcp-client.log 2>/dev/null | wc -l)
-RECONNECTS=$(grep "Triggering immediate reconnection" logs/tcp-client.log 2>/dev/null | wc -l)
+HEALTH_FAILS=$(grep -h "health check failed" logs/tcp-client.log logs/client-check.log 2>/dev/null | wc -l)
+RECONNECTS=$(grep -h "Triggering immediate reconnection" logs/tcp-client.log 2>/dev/null | wc -l)
 echo "   Health check failures: $HEALTH_FAILS"
 echo "   Reconnection attempts: $RECONNECTS"
 

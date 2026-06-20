@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TcpClientService {
 
     private static final Logger log = LoggerFactory.getLogger(TcpClientService.class);
+    private static final Logger checkLog = LoggerFactory.getLogger("client-check");
 
     @Autowired
     private AbstractClientConnectionFactory connectionFactory;
@@ -52,6 +53,9 @@ public class TcpClientService {
     @Value("${tcp.client.monitoring.tick-ms:2000}")
     private long monitoringTickMs;
 
+    @Value("${tcp.client.monitoring.probe-timeout-ms:1000}")
+    private long probeTimeoutMs;
+
     private TcpConnection activeConnection;
     private final SynchronousQueue<String> responseQueue = new SynchronousQueue<>();
     private final AtomicBoolean isConnecting = new AtomicBoolean(false);
@@ -68,7 +72,12 @@ public class TcpClientService {
                 } else {
                     response = payload.toString().trim();
                 }
-                log.info("TcpListener received response: [{}]", response);
+                boolean isCheckResponse = response.isEmpty() || response.contains("OK") || response.contains("probe");
+                if (isCheckResponse) {
+                    checkLog.info("TcpListener received response: [{}]", response);
+                } else {
+                    log.info("TcpListener received response: [{}]", response);
+                }
                 responseQueue.offer(response);
             } catch (Exception e) {
                 log.error("Error in TcpListener: {}", e.getMessage());
@@ -82,7 +91,7 @@ public class TcpClientService {
 
     @Scheduled(fixedDelay = 5000, initialDelay = 5000)
     public void testScheduling() {
-        log.info("TEST: Scheduled task is working! Time: {} Thread: {}", System.currentTimeMillis(), Thread.currentThread().getName());
+        checkLog.info("TEST: Scheduled task is working! Time: {} Thread: {}", System.currentTimeMillis(), Thread.currentThread().getName());
     }
 
     public ConnectionStateMachine.ConnectionState getConnectionStatus() {
@@ -98,25 +107,25 @@ public class TcpClientService {
 
         // Only monitor if we are currently CONNECTED. Skip during transient or error states.
         if (stateMachine.getCurrentState() != ConnectionStateMachine.ConnectionState.CONNECTED) {
-            log.debug("MONITOR: Skipping health check because state is not CONNECTED (current: {})", stateMachine.getCurrentState());
+            checkLog.debug("MONITOR: Skipping health check because state is not CONNECTED (current: {})", stateMachine.getCurrentState());
             return;
         }
 
         // Skip monitoring if a user command is in progress
         synchronized (this) {
             try {
-                log.info("Running connection health check (shallow probe)");
+                checkLog.info("Running connection health check (shallow probe)");
                 String response = sendShallowProbe();
-                log.info("Probe response: [{}]", response == null ? "NULL" : response);
+                checkLog.info("Probe response: [{}]", response == null ? "NULL" : response);
                 
                 if (response != null && response.contains("OK")) {
-                    log.info("Probe SUCCESS - response contains OK");
+                    checkLog.info("Probe SUCCESS - response contains OK");
                 } else {
-                    log.warn("Probe FAILED - response does not contain OK");
+                    checkLog.warn("Probe FAILED - response does not contain OK");
                     handleConnectionError("Invalid probe response: " + response);
                 }
             } catch (Exception e) {
-                log.error("Probe EXCEPTION: {}", e.getMessage(), e);
+                checkLog.error("Probe EXCEPTION: {}", e.getMessage(), e);
                 handleConnectionError(e.getMessage());
             }
         }
@@ -124,11 +133,11 @@ public class TcpClientService {
 
     private void handleConnectionError(String errorMessage) {
         ConnectionStateMachine.ConnectionState previousStatus = stateMachine.getCurrentState();
-        log.warn("Connection health check failed: {}", errorMessage);
+        checkLog.warn("Connection health check failed: {}", errorMessage);
         
         // Set to ERROR (transient)
         stateMachine.transitionTo(ConnectionStateMachine.ConnectionState.ERROR);
-        log.info("Connection status changed: {} -> ERROR", previousStatus);
+        checkLog.info("Connection status changed: {} -> ERROR", previousStatus);
         
         closePersistentConnection();
         triggerReconnection("health check failed");
@@ -163,7 +172,7 @@ public class TcpClientService {
         // Already synchronized by caller
         activeConnection.send(MessageBuilder.withPayload("probe:shallow".getBytes(StandardCharsets.UTF_8)).build());
 
-        String response = responseQueue.poll(1000, TimeUnit.MILLISECONDS);
+        String response = responseQueue.poll(probeTimeoutMs, TimeUnit.MILLISECONDS);
         if (response == null) {
             throw new Exception("Probe timeout");
         }
@@ -207,7 +216,7 @@ public class TcpClientService {
                         try {
                             log.info("Waiting {}ms before next connection attempt...", currentWait);
                             Thread.sleep(currentWait);
-                            currentWait = Math.min(currentWait * 2, 5000);
+                            currentWait = waitBetweenRetries; // Maintain constant wait time instead of exponential backoff
                         } catch (InterruptedException ie) {
                             Thread.currentThread().interrupt();
                             break;

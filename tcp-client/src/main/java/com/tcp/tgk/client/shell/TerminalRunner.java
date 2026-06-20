@@ -76,6 +76,12 @@ public class TerminalRunner {
                     continue;
                 }
 
+                if (!stateMachine.isConnected()) {
+                    System.out.println("connecting");
+                    System.out.println();
+                    continue;
+                }
+
                 try {
                     String response = clientService.sendCommand(command);
                     System.out.println(response);

@@ -188,7 +188,10 @@ public class SwingUiFrame {
         centerPanel.add(controlPanel, BorderLayout.NORTH);
 
         // 3. Output Panels
-        final JPanel outputGrid = new JPanel(new GridLayout(1, 2, 10, 10));
+        final JPanel outputGrid = new JPanel(new GridBagLayout());
+        GridBagConstraints ogbc = new GridBagConstraints();
+        ogbc.fill = GridBagConstraints.BOTH;
+        ogbc.weighty = 1.0;
         
         // Result and History area
         resultTextArea = new JTextArea();
@@ -198,7 +201,12 @@ public class SwingUiFrame {
         resultTextArea.setBackground(new Color(15, 23, 42)); // Slate Dark
         JScrollPane resultScroll = new JScrollPane(resultTextArea);
         resultScroll.setBorder(new TitledBorder(null, "Results & History (Last 20)", TitledBorder.LEADING, TitledBorder.TOP, null, Color.GRAY));
-        outputGrid.add(resultScroll);
+        resultScroll.setPreferredSize(new Dimension(0, 0));
+        
+        ogbc.gridx = 0;
+        ogbc.weightx = 1.0;
+        ogbc.insets = new Insets(0, 0, 0, 5);
+        outputGrid.add(resultScroll, ogbc);
 
         // Error Console area
         errorTextArea = new JTextArea();
@@ -206,9 +214,14 @@ public class SwingUiFrame {
         errorTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         errorTextArea.setForeground(new Color(253, 164, 175)); // Soft Red
         errorTextArea.setBackground(new Color(15, 23, 42)); // Slate Dark
-        JScrollPane errorScroll = new JScrollPane(errorTextArea);
+        final JScrollPane errorScroll = new JScrollPane(errorTextArea);
         errorScroll.setBorder(new TitledBorder(null, "Error & System Logs (Last 50 lines)", TitledBorder.LEADING, TitledBorder.TOP, null, Color.GRAY));
-        outputGrid.add(errorScroll);
+        errorScroll.setPreferredSize(new Dimension(0, 0));
+        
+        ogbc.gridx = 1;
+        ogbc.weightx = 1.0;
+        ogbc.insets = new Insets(0, 5, 0, 0);
+        outputGrid.add(errorScroll, ogbc);
 
         // Wrapper for outputGrid with Hide/Show Toggle Header
         JPanel logsWrapper = new JPanel(new BorderLayout(5, 5));
@@ -224,8 +237,8 @@ public class SwingUiFrame {
         toggleLogsBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                boolean nextVisible = !outputGrid.isVisible();
-                outputGrid.setVisible(nextVisible);
+                boolean nextVisible = !errorScroll.isVisible();
+                errorScroll.setVisible(nextVisible);
                 toggleLogsBtn.setText(nextVisible ? "▼ Hide Logs" : "▲ Show Logs");
                 frame.revalidate();
                 frame.repaint();
@@ -281,6 +294,10 @@ public class SwingUiFrame {
         ActionListener sendAction = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (!stateMachine.isConnected()) {
+                    appendResultLog("Client", "Connecting");
+                    return;
+                }
                 String selectedCmd = (String) cmdDropdown.getSelectedItem();
                 String fullCommand;
                 if ("maths".equals(selectedCmd)) {

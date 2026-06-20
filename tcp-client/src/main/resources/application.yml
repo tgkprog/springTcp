@@ -10,8 +10,8 @@ tcp:
     port: ${TCP_CLIENT_PORT:5039}
     connection:
       persistent: ${TCP_CLIENT_PERSISTENT:true}
-      timeout: ${TCP_CLIENT_TIMEOUT:550}
-      read-timeout: ${TCP_CLIENT_READ_TIMEOUT:5000}
+      timeout: ${TCP_CLIENT_TIMEOUT:250}
+      read-timeout: ${TCP_CLIENT_READ_TIMEOUT:500}
       retry:
         enabled: ${TCP_CLIENT_RETRY_ENABLED:true}
         max-attempts: ${TCP_CLIENT_RETRY_MAX_ATTEMPTS:99999}
@@ -22,4 +22,5 @@ tcp:
       tcp-no-delay: ${TCP_CLIENT_TCP_NODELAY:true}
     monitoring:
       enabled: ${TCP_CLIENT_MONITORING_ENABLED:true}
-      tick-ms: ${TCP_CLIENT_MONITORING_TICK:2000}
+      tick-ms: ${TCP_CLIENT_MONITORING_TICK:150}
+      probe-timeout-ms: ${TCP_CLIENT_MONITORING_PROBE_TIMEOUT:150}
