@@ -1,0 +1,18 @@
+#!/bin/bash
+# -----------------------------------------------------------------------------
+# stopService
+# Stops the "mathServer" systemd service.
+# -----------------------------------------------------------------------------
+
+SERVICE_NAME="mathServer"
+
+echo "=== Stopping ${SERVICE_NAME} Service ==="
+
+if [ "$EUID" -ne 0 ]; then
+    sudo systemctl stop "$SERVICE_NAME"
+else
+    systemctl stop "$SERVICE_NAME"
+fi
+
+echo "=== ${SERVICE_NAME} Status ==="
+systemctl status "$SERVICE_NAME" --no-pager || true

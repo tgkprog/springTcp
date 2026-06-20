@@ -1,0 +1,18 @@
+#!/bin/bash
+# -----------------------------------------------------------------------------
+# startService
+# Starts the "mathServer" systemd service.
+# -----------------------------------------------------------------------------
+
+SERVICE_NAME="mathServer"
+
+echo "=== Starting ${SERVICE_NAME} Service ==="
+
+if [ "$EUID" -ne 0 ]; then
+    sudo systemctl start "$SERVICE_NAME"
+else
+    systemctl start "$SERVICE_NAME"
+fi
+
+echo "=== ${SERVICE_NAME} Status ==="
+systemctl status "$SERVICE_NAME" --no-pager
