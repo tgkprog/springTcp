@@ -14,6 +14,10 @@ import org.springframework.integration.ip.tcp.connection.TcpNetClientConnectionF
 import org.springframework.integration.ip.tcp.serializer.ByteArrayCrLfSerializer;
 import org.springframework.messaging.MessageChannel;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.net.InetSocketAddress;
+
 @Configuration
 public class TcpClientConfig {
 
@@ -83,14 +87,21 @@ public class TcpClientConfig {
 
     @Bean
     public AbstractClientConnectionFactory clientConnectionFactory(org.springframework.context.ApplicationEventPublisher eventPublisher) {
-        TcpNetClientConnectionFactory connectionFactory = new TcpNetClientConnectionFactory(host, port);
+        TcpNetClientConnectionFactory connectionFactory = new TcpNetClientConnectionFactory(host, port) {
+            @Override
+            protected Socket createSocket(String host, int port) throws IOException {
+                Socket socket = getTcpSocketFactorySupport().getSocketFactory().createSocket();
+                socket.connect(new InetSocketAddress(host, port), connectionTimeout);
+                return socket;
+            }
+        };
         connectionFactory.setSerializer(new ByteArrayCrLfSerializer());
         connectionFactory.setDeserializer(new ByteArrayCrLfSerializer());
         connectionFactory.setSingleUse(false);
         connectionFactory.setSoTimeout(soTimeout);
         connectionFactory.setSoKeepAlive(soKeepAlive);
         connectionFactory.setSoTcpNoDelay(tcpNoDelay);
-        connectionFactory.setConnectTimeout(connectionTimeout);
+        connectionFactory.setConnectTimeout((connectionTimeout + 999) / 1000);
         
         // Enable TCP event publishing
         connectionFactory.setApplicationEventPublisher(eventPublisher);

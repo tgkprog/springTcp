@@ -1,4 +1,4 @@
 #to undo drop, make normal
-
+echo ip :$ip2.
 sudo iptables -D OUTPUT -d $ip2 -p tcp --dport 5039 -j DROP
 sudo iptables -D INPUT  -s $ip2 -p tcp --sport 5039 -j DROP

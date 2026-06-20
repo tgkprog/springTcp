@@ -18,7 +18,7 @@ sleep 10
 
 # Test client
 echo "2. Testing client with multiple commands..."
-./runC > /tmp/client-output.txt 2>&1 <<EOF &
+./runC-terminal > /tmp/client-output.txt 2>&1 <<EOF &
 status
 probe:shallow
 probe:deep
@@ -27,3 +27,15 @@ mgt:time
 m: 100 + 200
 status
 exit
+EOF
+
+CLIENT_PID=$!
+sleep 5
+echo "3. Cleaning up..."
+kill $CLIENT_PID 2>/dev/null
+kill $SRV_PID 2>/dev/null
+pkill -9 -f "java.*tcp" 2>/dev/null
+
+echo "=========================================="
+echo "Final test complete."
+echo "=========================================="
