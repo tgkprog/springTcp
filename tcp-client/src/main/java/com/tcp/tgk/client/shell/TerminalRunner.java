@@ -26,7 +26,8 @@ public class TerminalRunner {
             return;
         }
 
-        // Run the terminal shell in a separate thread so it doesn't block the main startup thread
+        // Run the terminal shell in a separate thread so it doesn't block the main
+        // startup thread
         new Thread(() -> {
             try {
                 // Wait slightly for system startup messages to settle
@@ -41,12 +42,12 @@ public class TerminalRunner {
             System.out.println("  status       - Show connection status");
             System.out.println("  state        - Show detailed state machine info");
             System.out.println("Examples:");
-            System.out.println("  probe:shallow");
-            System.out.println("  probe:deep");
-            System.out.println("  mgt:info");
-            System.out.println("  mgt:time");
-            System.out.println("  mgt:capabilities");
-            System.out.println("  m: 5 + 10");
+            System.out.println("  fast");
+            System.out.println("  deep");
+            System.out.println("  info");
+            System.out.println("  time");
+            System.out.println("  help");
+            System.out.println("  m 5 + 10");
             System.out.println();
 
             while (true) {
@@ -56,28 +57,28 @@ public class TerminalRunner {
                     break;
                 }
                 String command = scanner.nextLine().trim();
-                
+
                 if ("exit".equalsIgnoreCase(command)) {
                     System.out.println("Exiting...");
                     System.exit(0);
                 }
-                
+
                 if ("status".equalsIgnoreCase(command)) {
                     System.out.println("Connection Status: " + stateMachine.getCurrentState());
                     continue;
                 }
-                
+
                 if ("state".equalsIgnoreCase(command)) {
                     System.out.println(stateMachine.getStatusInfo());
                     continue;
                 }
-                
+
                 if (command.isEmpty()) {
                     continue;
                 }
 
                 if (!stateMachine.isConnected()) {
-                    System.out.println("connecting");
+                    System.out.println("[connecting...]");
                     System.out.println();
                     continue;
                 }
@@ -86,9 +87,15 @@ public class TerminalRunner {
                     String response = clientService.sendCommand(command);
                     System.out.println(response);
                 } catch (Exception e) {
-                    System.err.println("Error: " + e.getMessage());
+                    String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                    if (msg.toLowerCase().contains("not connected") || msg.toLowerCase().contains("connect")) {
+                        System.out.println("[connecting...] " + msg);
+                    } else {
+                        System.err.println("Error: " + msg);
+                    }
                 }
                 System.out.println();
+
             }
         }, "terminal-shell-thread").start();
     }

@@ -142,7 +142,7 @@ public class SwingUiFrame {
         cGbc.insets = new Insets(5, 5, 5, 5);
 
         // Command selection dropdown
-        cmdDropdown = new JComboBox<>(new String[]{"probe:shallow", "probe:deep", "mgt:info", "mgt:time", "maths"});
+        cmdDropdown = new JComboBox<>(new String[]{"fast", "deep", "info", "time", "help", "math"});
         cGbc.gridx = 0;
         cGbc.gridy = 0;
         cGbc.weightx = 0.0;
@@ -170,7 +170,7 @@ public class SwingUiFrame {
         genericPanel.add(payloadField, BorderLayout.CENTER);
 
         dynamicContainer.add(genericPanel, "generic");
-        dynamicContainer.add(mathPanel, "maths");
+        dynamicContainer.add(mathPanel, "math");
         
         cGbc.gridx = 1;
         cGbc.gridy = 0;
@@ -259,8 +259,8 @@ public class SwingUiFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 CardLayout cl = (CardLayout) dynamicContainer.getLayout();
-                if ("maths".equals(cmdDropdown.getSelectedItem())) {
-                    cl.show(dynamicContainer, "maths");
+                if ("math".equals(cmdDropdown.getSelectedItem())) {
+                    cl.show(dynamicContainer, "math");
                 } else {
                     cl.show(dynamicContainer, "generic");
                 }
@@ -300,7 +300,7 @@ public class SwingUiFrame {
                 }
                 String selectedCmd = (String) cmdDropdown.getSelectedItem();
                 String fullCommand;
-                if ("maths".equals(selectedCmd)) {
+                if ("math".equals(selectedCmd)) {
                     String v1 = val1Field.getText().trim();
                     String op = (String) opDropdown.getSelectedItem();
                     String v2 = val2Field.getText().trim();
@@ -308,7 +308,7 @@ public class SwingUiFrame {
                         appendErrorLog("Math values cannot be empty");
                         return;
                     }
-                    fullCommand = "m: " + v1 + " " + op + " " + v2;
+                    fullCommand = "m " + v1 + " " + op + " " + v2;
                 } else {
                     fullCommand = selectedCmd;
                     String payload = payloadField.getText().trim();

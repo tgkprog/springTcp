@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TCP Client – Behaviour & Monitoring Reference</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #d4d8e8;
+      line-height: 1.7;
+      padding: 2rem;
+    }
+    h1 { font-size: 2rem; color: #7eb8f7; border-bottom: 2px solid #2a2f45; padding-bottom: .6rem; margin-bottom: 1.5rem; }
+    h2 { font-size: 1.3rem; color: #a8c8ff; margin: 2rem 0 .6rem; }
+    h3 { font-size: 1rem; color: #8bd5ca; margin: 1.2rem 0 .4rem; }
+    p  { margin-bottom: .9rem; }
+    code {
+      background: #1e2235;
+      color: #f4c97a;
+      padding: .15em .45em;
+      border-radius: 4px;
+      font-size: .92em;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+    pre {
+      background: #1a1e2e;
+      border-left: 4px solid #3d5a99;
+      padding: 1rem 1.2rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: .88rem;
+      font-family: 'Cascadia Code', monospace;
+      margin: .8rem 0 1.2rem;
+      color: #c5d0f0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0 1.5rem;
+      font-size: .9rem;
+    }
+    th {
+      background: #1e2a45;
+      color: #7eb8f7;
+      text-align: left;
+      padding: .6rem .9rem;
+      border-bottom: 2px solid #2f3d60;
+    }
+    td {
+      padding: .55rem .9rem;
+      border-bottom: 1px solid #1e2235;
+      vertical-align: top;
+    }
+    tr:hover td { background: #161b2b; }
+    .box {
+      background: #141825;
+      border: 1px solid #2a3050;
+      border-radius: 8px;
+      padding: 1.1rem 1.4rem;
+      margin: 1rem 0 1.4rem;
+    }
+    .warn  { border-left: 4px solid #e5a050; background: #1e1a10; }
+    .info  { border-left: 4px solid #50a0e5; background: #101820; }
+    .good  { border-left: 4px solid #50c878; background: #101910; }
+    .label { font-size: .75rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; margin-bottom: .4rem; }
+    .warn  .label { color: #e5a050; }
+    .info  .label { color: #50a0e5; }
+    .good  .label { color: #50c878; }
+    ul { padding-left: 1.4rem; margin-bottom: .9rem; }
+    li { margin-bottom: .35rem; }
+    .dim { color: #6b7280; font-size: .85rem; }
+  </style>
+</head>
+<body>
+
+<h1>TCP Client — Behaviour &amp; Monitoring Reference</h1>
+
+<!-- ============================================================ -->
+<h2>1. What is <code>tcp.client.monitoring.tick-ms</code>?</h2>
+
+<p>
+  This is the interval (in milliseconds) at which the client's background health-check
+  scheduler fires. Controlled by the <code>@Scheduled</code> annotation on
+  <code>TcpClientService.monitorConnection()</code>:
+</p>
+
+<pre>
+@Scheduled(fixedDelayString  = "${tcp.client.monitoring.tick-ms:2000}",
+           initialDelayString = "${tcp.client.monitoring.tick-ms:2000}")
+public void monitorConnection() { ... }
+</pre>
+
+<p><strong>fixedDelay</strong> (not fixedRate) means the next tick starts <em>after the previous one finishes</em>,
+so the real gap is <code>tick-ms + time-to-run-probe</code>.</p>
+
+<!-- ============================================================ -->
+<h2>2. What happens every tick?</h2>
+
+<div class="box info">
+  <div class="label">Tick flow</div>
+  <ol style="padding-left:1.4rem">
+    <li>Guard: if <code>monitoringEnabled = false</code> → skip immediately (no cost).</li>
+    <li>Guard: if state is <strong>not CONNECTED</strong> (e.g. CONNECTING, ERROR) → skip immediately.</li>
+    <li>Acquire the object-level <code>synchronized</code> lock on <code>TcpClientService</code>.</li>
+    <li>Send <code>probe:shallow</code> over the live socket to the server.</li>
+    <li>Wait up to <code>probe-timeout-ms</code> (default 1000 ms) for a response.</li>
+    <li>
+      If the response contains <code>"OK"</code> → log success, release lock.<br>
+      If timeout or no OK → call <code>handleConnectionError()</code>, which:
+      <ul>
+        <li>Transitions state to ERROR</li>
+        <li>Closes the socket</li>
+        <li>Spawns the background <code>reconnection-thread</code></li>
+      </ul>
+    </li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2>3. How the client behaves overall</h2>
+
+<table>
+  <thead><tr><th>Phase</th><th>What the client does</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Startup</strong></td>
+      <td>
+        Reads config from env vars / YAML. In <code>terminal</code> mode calls
+        <code>connectToServer()</code> immediately. In <code>ui</code> mode waits for user action.
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Connecting</strong></td>
+      <td>
+        Tries <code>socket.connect(host, port, connectTimeout)</code>.
+        On failure waits <code>waitBetweenRetries</code> (170 ms) and retries — <strong>fixed wait,
+        no exponential back-off</strong>. Max retries = 99 999 (effectively forever).
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Connected</strong></td>
+      <td>
+        Holds one persistent socket. Keeps a <code>SynchronousQueue</code> for
+        request/response pairing. Spring Integration's event listener detects drops
+        and triggers immediate reconnection. Background health tick also validates liveness.
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Drop detected (event)</strong></td>
+      <td>
+        <code>TcpConnectionEventListener</code> fires synchronously on the socket reader
+        thread. Transitions state → ERROR → DISCONNECTED, then triggers
+        <code>reconnection-thread</code> within milliseconds.
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Drop detected (probe)</strong></td>
+      <td>
+        <code>monitorConnection()</code> sends a shallow probe; if no OK within
+        <code>probe-timeout-ms</code> it closes the socket and triggers reconnection.
+        This is the <em>fallback</em> path — the event listener normally beats it.
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Reconnecting</strong></td>
+      <td>
+        Fixed 170 ms loop. Each attempt creates a fresh TCP socket with a 150 ms
+        connect timeout (enforced at the socket level, not Spring level). As soon as
+        the server accepts, state → CONNECTED.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2>4. Current setting: <code>tick-ms = 2000</code></h2>
+
+<div class="box good">
+  <div class="label">Behaviour at 2000 ms</div>
+  <ul>
+    <li>One probe every ≈2 s while connected.</li>
+    <li>Each probe sends one small TCP message (<code>probe:shallow</code>) and waits up to 1 s for reply.</li>
+    <li>Worst-case extra probe cost per 2 s window: ~1 s (probe timeout). Typical: a few ms RTT.</li>
+    <li>Scheduler occupies one thread from the <code>SchedulingConfig</code> pool (size 2) for &lt;10 ms normally.</li>
+    <li>No meaningful CPU or network load. This is the <strong>recommended production setting</strong>.</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>5. What happens if you set <code>tick-ms = 100</code>?</h2>
+
+<p>
+  On a machine running <strong>only this client</strong>, connecting to <strong>one server</strong>:
+</p>
+
+<div class="box warn">
+  <div class="label">Impact at 100 ms</div>
+  <ul>
+    <li>
+      <strong>10× more probes per second.</strong> Each probe is a round-trip network request, not
+      a local operation.
+    </li>
+    <li>
+      The probe waits up to <code>probe-timeout-ms = 1000 ms</code> for a response. With
+      <code>fixedDelay</code> semantics the scheduler will not re-enter until the previous probe
+      finishes — so if each probe takes 5 ms RTT the effective interval is <code>100 + 5 = 105 ms</code>,
+      which is fine. But if a probe ever <em>times out</em> (1000 ms) you get back-pressure.
+    </li>
+    <li>
+      <strong>Lock contention:</strong> <code>monitorConnection()</code> holds the
+      <code>synchronized(this)</code> lock on <code>TcpClientService</code> for the full probe
+      duration. Any simultaneous terminal command (also synchronized) will stall until the probe
+      finishes. At 100 ms ticks this is much more frequent than at 2000 ms.
+    </li>
+    <li>
+      <strong>Server load:</strong> The server must handle 10 probe messages per second just for
+      keepalive. With only one client this is trivial, but worth knowing.
+    </li>
+    <li>
+      <strong>Log volume:</strong> <code>client-check.log</code> will receive ~10 entries/sec
+      instead of ~0.5/sec. Over an hour that is ~36 000 lines instead of ~1 800.
+    </li>
+    <li>
+      <strong>CPU:</strong> On a machine with nothing else running, a Java thread waking every
+      100 ms is negligible. Scheduler overhead is microseconds. Not a concern here.
+    </li>
+    <li>
+      <strong>Reconnection detection improvement:</strong> At 2000 ms, if the event-based
+      listener somehow misses a drop, the probe catches it within up to 2 s.
+      At 100 ms the probe would catch it within ≤100 ms. But in practice the event listener
+      detects drops within milliseconds anyway — so the practical gain is near zero.
+    </li>
+  </ul>
+</div>
+
+<div class="box info">
+  <div class="label">Verdict</div>
+  <p>
+    Setting <code>tick-ms = 100</code> on a single-client, single-server, otherwise-idle machine
+    is <strong>safe but wasteful</strong>. It adds no meaningful reconnection speed improvement
+    (the event listener already handles that), increases log noise significantly, and raises the
+    chance of transient lock contention during user commands.
+  </p>
+  <p>
+    <strong>Recommended:</strong> keep at <code>2000</code> ms (or even higher, e.g. <code>5000</code>)
+    since true drop detection comes from the socket event listener, not the probe tick.
+    The probe is a safety net, not the primary mechanism.
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<h2>6. Key configuration reference</h2>
+
+<table>
+  <thead><tr><th>Property</th><th>Default</th><th>Current (runC-terminal)</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>tcp.client.monitoring.enabled</code></td><td><code>false</code></td><td><code>true</code></td><td>Enables/disables the probe scheduler entirely</td></tr>
+    <tr><td><code>tcp.client.monitoring.tick-ms</code></td><td><code>2000</code></td><td><code>2000</code></td><td>Interval between health probes</td></tr>
+    <tr><td><code>tcp.client.monitoring.probe-timeout-ms</code></td><td><code>1000</code></td><td><code>1000</code></td><td>How long to wait for a probe reply before declaring failure</td></tr>
+    <tr><td><code>TCP_CLIENT_TIMEOUT</code> (connect timeout)</td><td>—</td><td><code>150 ms</code></td><td>Max time for a socket.connect() call; aborts fast to allow rapid retry</td></tr>
+    <tr><td><code>TCP_CLIENT_RETRY_WAIT</code></td><td>—</td><td><code>170 ms</code></td><td>Fixed wait between reconnection attempts (no back-off)</td></tr>
+  </tbody>
+</table>
+
+<p class="dim">Generated 2026-06-21 · tcp_tgk project · docs/client.html</p>
+
+</body>
+</html>

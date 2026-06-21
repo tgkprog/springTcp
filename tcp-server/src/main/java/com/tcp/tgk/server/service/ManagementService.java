@@ -88,14 +88,14 @@ public class ManagementService {
     private String handleCapabilities() {
         StringBuilder capabilities = new StringBuilder("CAPABILITIES:\n");
         capabilities.append("1. Probe Commands:\n");
-        capabilities.append("   - probe:shallow - Basic server health check\n");
-        capabilities.append("   - probe:deep - Detailed system information\n");
+        capabilities.append("   - fast - Basic server health check\n");
+        capabilities.append("   - deep - Detailed system information\n");
         capabilities.append("2. Management Commands:\n");
-        capabilities.append("   - mgt:info - Server information\n");
-        capabilities.append("   - mgt:time - Current server time\n");
-        capabilities.append("   - mgt:capabilities - List all capabilities\n");
+        capabilities.append("   - info - Server information\n");
+        capabilities.append("   - time - Current server time\n");
+        capabilities.append("   - help - List all capabilities\n");
         capabilities.append("3. Math Server:\n");
-        capabilities.append("   - m: <expression> - Calculate arithmetic expressions\n");
+        capabilities.append("   - m <expression> - Calculate arithmetic expressions\n");
         capabilities.append("   - Supported operations: +, -, *, /, %, ^ (power)");
         return capabilities.toString();
     }

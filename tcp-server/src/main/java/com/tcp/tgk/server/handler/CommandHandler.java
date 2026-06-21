@@ -34,17 +34,22 @@ public class CommandHandler {
     }
 
     private String processCommand(String command) {
-        if (command.startsWith("probe:")) {
-            String type = command.substring(6).trim();
-            return probeService.handleProbe(type);
-        } else if (command.startsWith("mgt:")) {
-            String type = command.substring(4).trim();
-            return managementService.handleManagement(type);
-        } else if (command.startsWith("m:")) {
-            String expression = command.substring(2).trim();
+        if (command.equalsIgnoreCase("fast")) {
+            return probeService.handleProbe("shallow");
+        } else if (command.equalsIgnoreCase("deep")) {
+            return probeService.handleProbe("deep");
+        } else if (command.equalsIgnoreCase("info")) {
+            return managementService.handleManagement("info");
+        } else if (command.equalsIgnoreCase("time")) {
+            return managementService.handleManagement("time");
+        } else if (command.equalsIgnoreCase("help")) {
+            return managementService.handleManagement("capabilities");
+        } else if (command.length() >= 2 && command.charAt(0) == 'm' && command.charAt(1) == ' ') {
+            // "m <expr>": everything after the first space is the math expression
+            String expression = command.substring(1).trim();
             return mathService.calculate(expression);
         } else {
-            return "ERROR: Unknown command. Use probe:, mgt:, or m:";
+            return "ERROR: Unknown command. Available: fast, deep, info, time, help, m <num> <op> <num>";
         }
     }
 }

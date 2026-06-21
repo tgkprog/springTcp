@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <!-- Register shutdown hook to flush buffered logs on JVM exit -->
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
+
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     
     <!-- File Appender with Size-based Rolling -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/tcp-client.log</file>
+        <immediateFlush>false</immediateFlush>
+        <bufferSize>2097152</bufferSize> <!-- 2MB buffer -->
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
@@ -15,7 +20,7 @@
             <maxIndex>20</maxIndex>
         </rollingPolicy>
         
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+        <triggeringPolicy class="com.tcp.tgk.client.logging.RollOnStartupAndSizeTriggeringPolicy">
             <maxFileSize>6MB</maxFileSize>
         </triggeringPolicy>
     </appender>
@@ -23,6 +28,8 @@
     <!-- File Appender for Check Logs -->
     <appender name="CHECK_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/client-check.log</file>
+        <immediateFlush>false</immediateFlush>
+        <bufferSize>2097152</bufferSize> <!-- 2MB buffer -->
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
@@ -33,19 +40,65 @@
             <maxIndex>20</maxIndex>
         </rollingPolicy>
         
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+        <triggeringPolicy class="com.tcp.tgk.client.logging.RollOnStartupAndSizeTriggeringPolicy">
             <maxFileSize>6MB</maxFileSize>
         </triggeringPolicy>
     </appender>
 
-    <!-- Root Logger - Only to FILE -->
-    <root level="INFO">
+    <!-- File Appender for Test Logs -->
+    <appender name="TEST_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/client-tests.log</file>
+        <immediateFlush>false</immediateFlush>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} - %msg%n</pattern>
+        </encoder>
+        
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>logs/client-tests.%i.log</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>20</maxIndex>
+        </rollingPolicy>
+        
+        <triggeringPolicy class="com.tcp.tgk.client.logging.RollOnStartupAndSizeTriggeringPolicy">
+            <maxFileSize>6MB</maxFileSize>
+        </triggeringPolicy>
+    </appender>
+
+    <!-- Async Appenders -->
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="FILE"/>
+        <queueSize>2048</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <appender name="ASYNC_CHECK" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="CHECK_FILE"/>
+        <queueSize>2048</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <appender name="ASYNC_TEST" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="TEST_FILE"/>
+        <queueSize>2048</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <!-- Root Logger - Only to ASYNC_FILE -->
+    <root level="INFO">
+        <appender-ref ref="ASYNC_FILE"/>
     </root>
 
     <!-- Check Logger -->
     <logger name="client-check" level="INFO" additivity="false">
-        <appender-ref ref="CHECK_FILE"/>
+        <appender-ref ref="ASYNC_CHECK"/>
+    </logger>
+
+    <!-- Test Logger -->
+    <logger name="client-tests" level="INFO" additivity="false">
+        <appender-ref ref="ASYNC_TEST"/>
     </logger>
 
     <!-- Application Loggers -->

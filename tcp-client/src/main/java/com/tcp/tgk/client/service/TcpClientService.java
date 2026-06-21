@@ -172,7 +172,7 @@ public class TcpClientService {
         }
 
         // Already synchronized by caller
-        activeConnection.send(MessageBuilder.withPayload("probe:shallow".getBytes(StandardCharsets.UTF_8)).build());
+        activeConnection.send(MessageBuilder.withPayload("fast".getBytes(StandardCharsets.UTF_8)).build());
 
         String response = responseQueue.poll(probeTimeoutMs, TimeUnit.MILLISECONDS);
         if (response == null) {
@@ -243,47 +243,27 @@ public class TcpClientService {
             return sendViaNewConnection(command);
         }
 
-        int attempts = retryEnabled ? maxRetryAttempts : 1;
-        Exception lastException = null;
-        
-        for (int i = 0; i < attempts; i++) {
-            try {
-                ensureConnected();
-                return sendViaPersistentConnection(command);
-            } catch (Exception e) {
-                lastException = e;
-                log.warn("Command failed (attempt {}): {}", i + 1, e.getMessage());
-                closePersistentConnection();
-                
-                if (i < attempts - 1 && retryEnabled) {
-                    log.info("Reconnecting in {}ms...", waitBetweenRetries);
-                    Thread.sleep(waitBetweenRetries);
-                    connectToServer();
-                }
-            }
+        // Fail-fast: do not block/retry here — background reconnection thread handles recovery.
+        // The caller (TerminalRunner / SwingUiFrame) is responsible for checking isConnected()
+        // before calling sendCommand, and should display "Connecting..." to the user.
+        ensureConnected();
+        try {
+            return sendViaPersistentConnection(command);
+        } catch (Exception e) {
+            // Connection dropped mid-send; clean up and let the background thread reconnect.
+            log.warn("sendCommand failed after connection check: {}", e.getMessage());
+            closePersistentConnection();
+            triggerReconnection("send failed");
+            throw e;
         }
-        
-        throw new Exception("Failed after " + attempts + " attempts: " + lastException.getMessage(), lastException);
     }
 
     private void ensureConnected() throws Exception {
         if (stateMachine.getCurrentState() == ConnectionStateMachine.ConnectionState.INIT_IDLE) {
-            throw new Exception("Not connected. Please connect first using the Reconnect button or press Enter in the Address field.");
+            throw new Exception("Not connected - awaiting initial connection.");
         }
         if (!stateMachine.isConnected() || activeConnection == null || !activeConnection.isOpen()) {
-            log.info("Connection lost, reconnecting...");
-            connectToServer();
-            
-            // Wait for connection to be established (up to 10 seconds)
-            int waitTime = 0;
-            while (isConnecting.get() && !stateMachine.isConnected() && waitTime < 10000) {
-                Thread.sleep(100);
-                waitTime += 100;
-            }
-            
-            if (!stateMachine.isConnected() || activeConnection == null || !activeConnection.isOpen()) {
-                throw new Exception("Not connected");
-            }
+            throw new Exception("Not connected - reconnection in progress.");
         }
     }
 
